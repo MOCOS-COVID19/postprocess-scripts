@@ -24,31 +24,25 @@ def runner(path, simulation_prefix, outputs_id, bundle_prefix):
     """
 
     d = path
-    list_subfolders_with_paths = [f.path for f in os.scandir(d) if f.is_dir()]
-    sim_filter = f'{simulation_prefix}_'
+    list_files_with_paths = [f.path for f in os.scandir(d) if f.is_file()]
+    list_files_with_paths.sort()
+    sim_filter = f'{bundle_prefix}bundle'
     x_ = []
     y_ = []
     successes = 0
-    for sub_ in list_subfolders_with_paths:
+    for sub_ in list_files_with_paths:
         if not os.path.basename(sub_).startswith(sim_filter):
             continue
-        bundle_dir = os.path.join(sub_, 'outputs', outputs_id)
-        bundle_x = os.path.join(bundle_dir, f'{bundle_prefix}bundle_x.pkl')
-        bundle_y = os.path.join(bundle_dir, f'{bundle_prefix}bundle_y.pkl')
-        if os.path.exists(bundle_x):
-            with open(bundle_x, 'rb') as f:
+
+        if os.path.basename(sub_).startswith(f'{sim_filter}_x'):
+            with open(sub_, 'rb') as f:
                 x = pickle.load(f)
                 x_.extend(x)
-        else:
-            print(f'cannot read bundle_x from {bundle_x} - file does not exist!')
-            continue
-        if os.path.exists(bundle_y):
-            with open(bundle_y, 'rb') as f:
+        elif os.path.basename(sub_).startswith(f'{sim_filter}_y'):
+            with open(sub_, 'rb') as f:
                 y = pickle.load(f)
                 y_.extend(y)
-                successes += 1
-        else:
-            print(f'cannot read bundle_y from {bundle_y} - file does not exist!')
+
     bundle_x = os.path.join(d, f'{bundle_prefix}bundle_x.pkl')
     bundle_y = os.path.join(d, f'{bundle_prefix}bundle_y.pkl')
     if os.path.exists(bundle_x):
@@ -61,16 +55,6 @@ def runner(path, simulation_prefix, outputs_id, bundle_prefix):
     else:
         with open(bundle_y, 'wb') as f:
             pickle.dump(y_, f)
-    '''
-    if successes > 0:
-        xy = np.vstack([x_, y_])
-        z = scipy.stats.gaussian_kde(xy)(xy)
-        fig, ax = plt.subplots()
-        ax.scatter(x_, y_, c=z, s=1, edgecolor='')
-        fig.tight_layout()
-        plt.savefig(os.path.join(d, f'bundle_all_{bundle_prefix}.png'), dpi=300)
-        plt.close(fig)
-    '''
     if successes > 0:
         xedges = np.arange(0, 60, 0.1)
         yedges = np.arange(0, 20000, 30)
@@ -85,7 +69,7 @@ def runner(path, simulation_prefix, outputs_id, bundle_prefix):
 
         ax.pcolormesh(X, Y, H, cmap='Blues', vmin=0, vmax=flat[-int(len(flat) / 1000)])
         fig.tight_layout()
-        plt.savefig(os.path.join(d, f'bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
+        plt.savefig(os.path.join(d, f'bundle_all_{bundle_prefix}_test.png'), dpi=300)
         plt.close(fig)
 
 
