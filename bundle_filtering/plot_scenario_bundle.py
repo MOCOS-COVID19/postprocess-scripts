@@ -7,10 +7,8 @@ import scipy.stats
 
 @click.command()
 @click.option('--path', type=click.Path(exists=True))
-@click.option('--simulation-prefix', default='grid')
-@click.option('--outputs-id', default='')
 @click.option('--bundle-prefix', default='')
-def runner(path, simulation_prefix, outputs_id, bundle_prefix):
+def runner(path, bundle_prefix):
     """
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
