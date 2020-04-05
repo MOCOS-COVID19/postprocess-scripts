@@ -32,14 +32,14 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
     y_ = []
     successes = 0
     for sub_ in list_subfolders_with_paths:
-        #print(f'entering {sub_}')
-        #print(f'basename: {os.path.basename(sub_)} vs filter: {sim_filter}')
+        print(f'entering {sub_}')
+        print(f'basename: {os.path.basename(sub_)} vs filter: {sim_filter}')
         if not os.path.basename(sub_).startswith(sim_filter):
             continue
         bundle_dir = os.path.join(sub_, 'outputs', outputs_id)
         bundle_x = os.path.join(bundle_dir, f'{bundle_prefix}bundle_x.pkl')
         bundle_y = os.path.join(bundle_dir, f'{bundle_prefix}bundle_y.pkl')
-        #print(f'checking if exists: {bundle_x}')
+        print(f'checking if exists: {bundle_x}')
         if os.path.exists(bundle_x):
             with open(bundle_x, 'rb') as f:
                 x = pickle.load(f)
@@ -52,6 +52,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
                 y = pickle.load(f)
                 y_.extend(y)
                 successes += 1
+                print(f'adding x and y: {bundle_x} and {bundle_y}')
         else:
             print(f'cannot read bundle_y from {bundle_y} - file does not exist!')
     print(successes)
