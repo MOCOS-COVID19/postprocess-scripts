@@ -31,15 +31,15 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
     :return:
     """
     d = path
-    bundle_x = os.path.join(d, f'{bundle_prefix}bundle_x_{q_id}.pkl')
-    bundle_y = os.path.join(d, f'{bundle_prefix}bundle_y_{q_id}.pkl')
+    bundle_x_ = os.path.join(d, f'{bundle_prefix}bundle_x_{q_id}.pkl')
+    bundle_y_ = os.path.join(d, f'{bundle_prefix}bundle_y_{q_id}.pkl')
     x_ = []
     y_ = []
     successes = 0
-    if os.path.exists(bundle_x) and os.path.exists(bundle_y):
-        with open(bundle_x, 'rb') as f:
+    if os.path.exists(bundle_x_) and os.path.exists(bundle_y_):
+        with open(bundle_x_, 'rb') as f:
                 x_ = pickle.load(f)
-        with open(bundle_y, 'rb') as f:
+        with open(bundle_y_, 'rb') as f:
                 y_ = pickle.load(f)
         successes = 1
     else:
@@ -67,15 +67,15 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
                 print(f'cannot read - either {bundle_x} or {bundle_y} do not exist!')
                 continue
         print(successes)
-        if os.path.exists(bundle_x):
-            print(f'cannot save bundle_x to {bundle_x} - file already exists!')
+        if os.path.exists(bundle_x_):
+            print(f'cannot save bundle_x to {bundle_x_} - file already exists!')
         else:
-            with open(bundle_x, 'wb') as f:
+            with open(bundle_x_, 'wb') as f:
                 pickle.dump(x_, f)
-        if os.path.exists(bundle_y):
-            print(f'cannot save bundle_y to {bundle_y} - file already exists!')
+        if os.path.exists(bundle_y_):
+            print(f'cannot save bundle_y to {bundle_y_} - file already exists!')
         else:
-            with open(bundle_y, 'wb') as f:
+            with open(bundle_y_, 'wb') as f:
                 pickle.dump(y_, f)
     if successes > 0:
         xedges = np.arange(0, max_x, max_x/plot_resolution)
