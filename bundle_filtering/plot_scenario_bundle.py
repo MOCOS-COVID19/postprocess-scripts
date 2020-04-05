@@ -7,7 +7,7 @@ import scipy.stats
 
 @click.command()
 @click.option('--path', type=click.Path(exists=True))
-@click.option('--simulation-prefix', default='grid_')
+@click.option('--simulation-prefix', default='grid')
 @click.option('--outputs-id', default='')
 @click.option('--bundle-prefix', default='')
 def runner(path, simulation_prefix, outputs_id, bundle_prefix):
@@ -15,7 +15,7 @@ def runner(path, simulation_prefix, outputs_id, bundle_prefix):
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
     :param path: path to set of simulations e.g. "<outputdir>/<experiment_root>/"
-    :param simulation_prefix: prefix used for set of simulations, e.g. "grid_"
+    :param simulation_prefix: prefix used for set of simulations, e.g. "grid"
     :param outputs_id: identifier for simulation outputs,
                        e.g. "wroclaw" for "<path>/<simulation_prefix>_*/outputs/<outputs_id>"
     :param bundle_prefix: string prefix for reading bundle coordinations (may be blank)
