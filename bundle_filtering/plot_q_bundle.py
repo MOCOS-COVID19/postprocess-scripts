@@ -53,8 +53,8 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
             print(f'cannot read - either {bundle_x} or {bundle_y} do not exist!')
             continue
     print(successes)
-    bundle_x = os.path.join(d, f'{bundle_prefix}bundle_x.pkl')
-    bundle_y = os.path.join(d, f'{bundle_prefix}bundle_y.pkl')
+    bundle_x = os.path.join(d, f'{bundle_prefix}bundle_x_{q_id}.pkl')
+    bundle_y = os.path.join(d, f'{bundle_prefix}bundle_y_{q_id}.pkl')
     if os.path.exists(bundle_x):
         print(f'cannot save bundle_x to {bundle_x} - file already exists!')
     else:
@@ -66,23 +66,19 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
         with open(bundle_y, 'wb') as f:
             pickle.dump(y_, f)
     if successes > 0:
-        xedges = np.arange(61)
-        yedges = np.arange(0, 10000, 50)
+        xedges = np.arange(0, 60, 0.1)
+        yedges = np.arange(0, 20000, 30)
         H, xedges, yedges = np.histogram2d(x_, y_, bins=(xedges, yedges))
         H = H.T  # Let each row list bins with common y range.
-        #xy = np.vstack([x_, y_])
-        #z = scipy.stats.gaussian_kde(xy)(xy)
-        from matplotlib.image import NonUniformImage
-        #fig, ax = plt.subplots()
-        fig = plt.figure(figsize=(7, 7))
-        ax = fig.add_subplot(111, title='NonUniformImage: interpolated', aspect='equal', xlim=xedges[[0, -1]], ylim=yedges[[0, -1]])
-        im = NonUniformImage(ax, interpolation='bilinear')
-        xcenters = (xedges[:-1] + xedges[1:]) / 2
-        ycenters = (yedges[:-1] + yedges[1:]) / 2
-        im.set_data(xcenters, ycenters, H)
-        ax.images.append(im)
-        #ax.scatter(x_, y_, c=z, s=1, edgecolor='')
-        #fig.tight_layout()
+
+        fig, ax = plt.subplots()
+
+        X, Y = np.meshgrid(xedges, yedges)
+        flat = H.flatten()
+        flat.sort()
+
+        ax.pcolormesh(X, Y, H, cmap='Blues', vmin=0, vmax=flat[-int(len(flat) / 1000)])
+        fig.tight_layout()
         plt.savefig(os.path.join(d, f'bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
         plt.close(fig)
 
