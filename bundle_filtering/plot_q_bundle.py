@@ -7,7 +7,7 @@ import scipy.stats
 
 @click.command()
 @click.option('--path', type=click.Path(exists=True))
-@click.option('--simulation-prefix', default='grid_')
+@click.option('--simulation-prefix', default='grid')
 @click.option('--q-id', type=int, default=0)
 @click.option('--outputs-id', default='')
 @click.option('--bundle-prefix', default='')
@@ -16,8 +16,8 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
     :param path: path to set of simulations e.g. "<outputdir>/<experiment_root>/"
-    :param simulation_prefix: prefix used for set of simulations, e.g. "grid_"
-    :param q_id: q id value used for filtering the proper simulations, e.g. "2" for filtering on "grid_2_*"
+    :param simulation_prefix: prefix used for set of simulations, e.g. "grid"
+    :param q_id: q id value used for filtering the proper simulations, e.g. "2" for filtering on "<simulation_prefix>_2_*"
     :param outputs_id: identifier for simulation outputs,
                        e.g. "wroclaw" for "<path>/<simulation_prefix>_<q_id>_*/outputs/<outputs_id>"
     :param bundle_prefix: string prefix for reading bundle coordinations (may be blank)
@@ -32,14 +32,14 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
     y_ = []
     successes = 0
     for sub_ in list_subfolders_with_paths:
-        print(f'entering {sub_}')
-        print(f'basename: {os.path.basename(sub_)} vs filter: {sim_filter}')
+        #print(f'entering {sub_}')
+        #print(f'basename: {os.path.basename(sub_)} vs filter: {sim_filter}')
         if not os.path.basename(sub_).startswith(sim_filter):
             continue
         bundle_dir = os.path.join(sub_, 'outputs', outputs_id)
         bundle_x = os.path.join(bundle_dir, f'{bundle_prefix}bundle_x.pkl')
         bundle_y = os.path.join(bundle_dir, f'{bundle_prefix}bundle_y.pkl')
-        print(f'checking if exists: {bundle_x}')
+        #print(f'checking if exists: {bundle_x}')
         if os.path.exists(bundle_x):
             with open(bundle_x, 'rb') as f:
                 x = pickle.load(f)
