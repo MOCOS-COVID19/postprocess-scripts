@@ -39,22 +39,19 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
         bundle_dir = os.path.join(sub_, 'outputs', outputs_id)
         bundle_x = os.path.join(bundle_dir, f'{bundle_prefix}bundle_x.pkl')
         bundle_y = os.path.join(bundle_dir, f'{bundle_prefix}bundle_y.pkl')
-        print(f'checking if exists: {bundle_x}')
-        if os.path.exists(bundle_x):
+        print(f'checking if exists: {bundle_x} and {bundle_y}')
+        if os.path.exists(bundle_x) and os.path.exists(bundle_y):
             with open(bundle_x, 'rb') as f:
                 x = pickle.load(f)
                 x_.extend(x)
-        else:
-            print(f'cannot read bundle_x from {bundle_x} - file does not exist!')
-            continue
-        if os.path.exists(bundle_y):
             with open(bundle_y, 'rb') as f:
                 y = pickle.load(f)
                 y_.extend(y)
-                successes += 1
-                print(f'adding x and y: {bundle_x} and {bundle_y}')
+            successes += 1
+            print(f'added x and y: {bundle_x} and {bundle_y}')
         else:
-            print(f'cannot read bundle_y from {bundle_y} - file does not exist!')
+            print(f'cannot read - either {bundle_x} or {bundle_y} do not exist!')
+            continue
     print(successes)
     if successes > 0:
         xy = np.vstack([x_, y_])
