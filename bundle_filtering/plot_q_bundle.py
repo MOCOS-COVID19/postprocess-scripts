@@ -33,6 +33,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
     successes = 0
     for sub_ in list_subfolders_with_paths:
         print(f'entering {sub_}')
+        print(f'basename: {os.path.basename(sub_)} vs filter: {sim_filter}')
         if not os.path.basename(sub_).startswith(sim_filter):
             continue
         bundle_dir = os.path.join(sub_, 'outputs', outputs_id)
