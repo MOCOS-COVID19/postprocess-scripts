@@ -11,7 +11,9 @@ import scipy.stats
 @click.option('--q-id', type=int, default=0)
 @click.option('--outputs-id', default='')
 @click.option('--bundle-prefix', default='')
-def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
+@click.option('--max-x', type=int, default=60)
+@click.option('--max-y', type=int, default=20000)
+def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_y):
     """
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
@@ -22,6 +24,8 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
                        e.g. "wroclaw" for "<path>/<simulation_prefix>_<q_id>_*/outputs/<outputs_id>"
     :param bundle_prefix: string prefix for reading bundle coordinations (may be blank)
                           - method searches for files <bundle_prefix>bundle_x.pkl and <bundle_prefix>bundle_y.pkl
+    :param max_x: time horizon in days for visualization (e.g. 60 [days]) - longer trajectories will be trimmed
+    :param max_y: max value for visualization (e.g. 20000) - trajectories with larger than max_y cases will be trimmed
     :return:
     """
 
@@ -66,8 +70,8 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
         with open(bundle_y, 'wb') as f:
             pickle.dump(y_, f)
     if successes > 0:
-        xedges = np.arange(0, 60, 0.1)
-        yedges = np.arange(0, 20000, 30)
+        xedges = np.arange(0, max_x, max_x/200)
+        yedges = np.arange(0, max_y, max_y/200)
         H, xedges, yedges = np.histogram2d(x_, y_, bins=(xedges, yedges))
         H = H.T  # Let each row list bins with common y range.
 
@@ -76,8 +80,9 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
         X, Y = np.meshgrid(xedges, yedges)
         flat = H.flatten()
         flat.sort()
-
-        ax.pcolormesh(X, Y, H, cmap='Blues', vmin=0, vmax=flat[-int(len(flat) / 1000)])
+        max_value = flat[-int(len(flat) / 1000)]
+        print(f'max_value for coloring (0.1 percentile) : {max_value}')
+        ax.pcolormesh(X, Y, H, cmap='Blues', vmin=0, vmax=max_value)
         fig.tight_layout()
         plt.savefig(os.path.join(d, f'bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
         plt.close(fig)
