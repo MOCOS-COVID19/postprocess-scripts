@@ -51,7 +51,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix):
                 successes += 1
         else:
             print(f'cannot read bundle_y from {bundle_y} - file does not exist!')
-
+    print(successes)
     if successes > 0:
         xy = np.vstack([x_, y_])
         z = scipy.stats.gaussian_kde(xy)(xy)
