@@ -89,16 +89,10 @@ def runner(path, zero, minus, minus_days, minus_tolerance, bundle_days, bundle_p
     print(tries)
     bundle_x = os.path.join(d, f'{bundle_prefix}bundle_x.pkl')
     bundle_y = os.path.join(d, f'{bundle_prefix}bundle_y.pkl')
-    if os.path.exists(bundle_x):
-        print(f'cannot save bundle_x to {bundle_x} - file already exists!')
-    else:
-        with open(bundle_x, 'wb') as f:
-            pickle.dump(x_, f)
-    if os.path.exists(bundle_y):
-        print(f'cannot save bundle_y to {bundle_y} - file already exists!')
-    else:
-        with open(bundle_y, 'wb') as f:
-            pickle.dump(y_, f)
+    with open(bundle_x, 'wb') as f:
+        pickle.dump(x_, f)
+    with open(bundle_y, 'wb') as f:
+        pickle.dump(y_, f)
 
 
 if __name__ == '__main__':
