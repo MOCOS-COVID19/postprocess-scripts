@@ -3,7 +3,6 @@ import click
 import numpy as np
 from matplotlib import pyplot as plt
 import os
-import scipy.stats
 
 
 def value_to_id(value, max_value, resolution):
@@ -50,19 +49,9 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
     :return:
     """
     d = path
-    #bundle_x_ = os.path.join(d, f'{bundle_prefix}bundle_x_{q_id}.pkl')
-    #bundle_y_ = os.path.join(d, f'{bundle_prefix}bundle_y_{q_id}.pkl')
     coeffs_path = os.path.join(d, f'{bundle_prefix}coeffs_{q_id}.pkl')
     coeffs_ = []
-    #x_ = []
-    #y_ = []
     successes = 0
-    #if os.path.exists(bundle_x_) and os.path.exists(bundle_y_):
-    #    with open(bundle_x_, 'rb') as f:
-    #            x_ = pickle.load(f)
-    #    with open(bundle_y_, 'rb') as f:
-    #            y_ = pickle.load(f)
-    #    successes = 1
     if os.path.exists(coeffs_path):
         with open(coeffs_path, 'rb') as f:
             coeffs_ = pickle.load(f)
@@ -84,34 +73,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             else:
                 print(f'cannot read - {coeff_path} do not exist!')
                 continue
-            '''bundle_x = os.path.join(bundle_dir, f'{bundle_prefix}bundle_x.pkl')
-            bundle_y = os.path.join(bundle_dir, f'{bundle_prefix}bundle_y.pkl')
-            print(f'checking if exists: {bundle_x} and {bundle_y}')
-            if os.path.exists(bundle_x) and os.path.exists(bundle_y):
-                with open(bundle_x, 'rb') as f:
-                    x = pickle.load(f)
-                    x_.extend(x)
-                with open(bundle_y, 'rb') as f:
-                    y = pickle.load(f)
-                    y_.extend(y)
-                successes += 1
-                print(f'added x and y: {bundle_x} and {bundle_y}')
-            else:
-                print(f'cannot read - either {bundle_x} or {bundle_y} do not exist!')
-                continue
-            '''
         print(successes)
-        """if os.path.exists(bundle_x_):
-            print(f'cannot save bundle_x to {bundle_x_} - file already exists!')
-        else:
-            with open(bundle_x_, 'wb') as f:
-                pickle.dump(x_, f)
-        if os.path.exists(bundle_y_):
-            print(f'cannot save bundle_y to {bundle_y_} - file already exists!')
-        else:
-            with open(bundle_y_, 'wb') as f:
-                pickle.dump(y_, f)
-                """
         with open(coeffs_path, 'wb') as f:
             pickle.dump(coeffs_, f)
     if successes > 0:
@@ -128,7 +90,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
                 array[x_to_xid(x_elem, max_x, plot_resolution_x)][y_to_yid(y_elem, max_y, plot_resolution_y)] += 1.0
 
         fig, ax = plt.subplots(figsize=(10, 6))
-        plt.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.percentile(array, 99), aspect='auto')
+        pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.percentile(array, 99), aspect='auto')
         ax.set_title("Wiązka prawdopodobnych krzywych", fontsize=18)
         cbb = plt.colorbar(pa, shrink=0.35)
 

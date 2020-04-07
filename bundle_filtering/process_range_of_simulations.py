@@ -29,9 +29,9 @@ def detected_cases(df_r1):
 @click.option('--minus', type=int, default=81)
 @click.option('--minus-days', type=int, default=7)
 @click.option('--minus-tolerance', type=float, default=0.1)
-@click.option('--bundle-days', type=int, default=60)
-@click.option('--bundle-prefix', default='')
-def runner(path, zero, minus, minus_days, minus_tolerance, bundle_days, bundle_prefix):
+@click.option('--days', type=int, default=60)
+@click.option('--prefix', default='')
+def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
     """
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
@@ -40,8 +40,8 @@ def runner(path, zero, minus, minus_days, minus_tolerance, bundle_days, bundle_p
     :param minus: number of detected cases at past time (2-point checkpoint)
     :param minus_days: how many days are between minus day and zero day (e.g. 7)
     :param minus_tolerance: fraction of "minus" that is tolerated (e.g. 0.1*minus)
-    :param bundle_days: time horizon used for saving forecast bundle files (e.g. 60)
-    :param bundle_prefix: file prefix for storing bundle coordinations (may be blank)
+    :param days: time horizon used for saving forecast bundle files (e.g. 60)
+    :param prefix: file prefix for storing bundle coordinations (may be blank)
     :return:
     """
 
@@ -50,8 +50,6 @@ def runner(path, zero, minus, minus_days, minus_tolerance, bundle_days, bundle_p
     zero_time = zero
     minus_time = minus
     successes = 0
-    #x_ = []
-    #y_ = []
     coeffs = []
     tries = 0
     fails = []
@@ -72,7 +70,7 @@ def runner(path, zero, minus, minus_days, minus_tolerance, bundle_days, bundle_p
             continue
 
         t0 = detected[zero_time]
-        detected = detected - detected[zero_time]
+        detected = detected - t0
         filt_detected = detected[detected <= - minus_days]
         if len(filt_detected) == 0:
             continue
@@ -84,25 +82,17 @@ def runner(path, zero, minus, minus_days, minus_tolerance, bundle_days, bundle_p
             continue
 
         successes += 1
-        x = detected[0 <= detected <= bundle_days]
+        x = detected[0 <= detected <= days]
         y = np.arange(zero_time, zero_time + len(x))
         coeff = np.polyfit(x, np.log(y), 5)
         coeffs.append(coeff)
-        #x_.extend(list(x))
-        #y_.extend(list(y))
         detected = None
         x = None
         y = None
 
-    coeff_path = os.path.join(d, f'{bundle_prefix}coeffs.pkl')
+    coeff_path = os.path.join(d, f'{prefix}coeffs.pkl')
     with(coeff_path, 'wb') as f:
         pickle.dump(coeffs)
-    #bundle_x = os.path.join(d, f'{bundle_prefix}bundle_x.pkl')
-    #bundle_y = os.path.join(d, f'{bundle_prefix}bundle_y.pkl')
-    #with open(bundle_x, 'wb') as f:
-    #    pickle.dump(x_, f)
-    #with open(bundle_y, 'wb') as f:
-    #    pickle.dump(y_, f)
 
     too_small = (1 - minus_tolerance) * minus_time
     too_large = (1 + minus_tolerance) * minus_time
