@@ -50,24 +50,30 @@ def runner(path, zero, minus, minus_days, minus_tolerance, bundle_days, bundle_p
     zero_time = zero
     minus_time = minus
     successes = 0
-    x_ = []
-    y_ = []
+    #x_ = []
+    #y_ = []
+    coeffs = []
     tries = 0
     fails = []
     for sub_ in list_subfolders_with_paths:
         if os.path.basename(sub_).startswith('agg'):
             continue
 
-        tries += 1
         progression_path = os.path.join(sub_, 'output_df_progression_times.csv')
+        if not os.path.exists(progression_path):
+            continue
+
+        tries += 1
         df = pd.read_csv(progression_path)
         detected = detected_cases(df).values
+        df = None
+
         if len(detected) <= zero_time:
             continue
 
-        detected = detected - detected[zero_time]
         t0 = detected[zero_time]
-        filt_detected = detected[detected <= t0 - minus_days]
+        detected = detected - detected[zero_time]
+        filt_detected = detected[detected <= - minus_days]
         if len(filt_detected) == 0:
             continue
 
@@ -78,22 +84,32 @@ def runner(path, zero, minus, minus_days, minus_tolerance, bundle_days, bundle_p
             continue
 
         successes += 1
-        detected = detected[detected >= 0]
-        x = detected[detected <= bundle_days]
+        x = detected[0 <= detected <= bundle_days]
         y = np.arange(zero_time, zero_time + len(x))
-        x_.extend(list(x))
-        y_.extend(list(y))
+        coeff = np.polyfit(x, np.log(y), 5)
+        coeffs.append(coeff)
+        #x_.extend(list(x))
+        #y_.extend(list(y))
         detected = None
+        x = None
+        y = None
 
-    print(fails)
-    print(successes)
-    print(tries)
-    bundle_x = os.path.join(d, f'{bundle_prefix}bundle_x.pkl')
-    bundle_y = os.path.join(d, f'{bundle_prefix}bundle_y.pkl')
-    with open(bundle_x, 'wb') as f:
-        pickle.dump(x_, f)
-    with open(bundle_y, 'wb') as f:
-        pickle.dump(y_, f)
+    coeff_path = os.path.join(d, f'{bundle_prefix}coeffs.pkl')
+    with(coeff_path, 'wb') as f:
+        pickle.dump(coeffs)
+    #bundle_x = os.path.join(d, f'{bundle_prefix}bundle_x.pkl')
+    #bundle_y = os.path.join(d, f'{bundle_prefix}bundle_y.pkl')
+    #with open(bundle_x, 'wb') as f:
+    #    pickle.dump(x_, f)
+    #with open(bundle_y, 'wb') as f:
+    #    pickle.dump(y_, f)
+
+    too_small = (1 - minus_tolerance) * minus_time
+    too_large = (1 + minus_tolerance) * minus_time
+    print(f'bundle condition failing values: {fails}, '
+          f'smaller than {too_small:.1f}: {len([fail for fail in fails if fail < too_small])}, '
+          f'larger than {too_large:.1f}: {len([fail for fail in fails if fail > too_large])}')
+    print(f'bundle success ratio: {successes}/{tries}')
 
 
 if __name__ == '__main__':

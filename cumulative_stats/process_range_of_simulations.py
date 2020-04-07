@@ -81,6 +81,7 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
 
         if len(detected) <= zero_time:
             continue
+
         t0 = detected[zero_time]
         detected = detected - detected[zero_time]
         filt_detected = detected[detected <= - minus_days]
