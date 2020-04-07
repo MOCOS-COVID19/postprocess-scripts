@@ -82,7 +82,8 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
             continue
 
         successes += 1
-        x = detected[0 <= detected <= days]
+        x = detected[0 <= detected]
+        x = x[x <= days]
         y = np.arange(zero_time, zero_time + len(x))
         coeff = np.polyfit(x, np.log(y), 5)
         coeffs.append(coeff)
