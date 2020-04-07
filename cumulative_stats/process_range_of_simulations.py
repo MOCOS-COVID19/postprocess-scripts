@@ -105,9 +105,11 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
         x_.append(detected)
         y_.append(infected)
 
-    print(f'statistics,detected,infected')
-    print(f'mean,{np.array(x_).mean()},{np.array(y_).mean()}')
-    print(f'std,{np.array(x_).std()},{np.array(y_).std()}')
+    if len(x_) > 0:
+        print(f'statistics,detected,infected')
+        print(f'mean,{np.array(x_).mean()},{np.array(y_).mean()}')
+        print(f'std,{np.array(x_).std()},{np.array(y_).std()}')
+
     path_detected_pkl = os.path.join(d, f'{prefix}stats_detected.pkl')
     path_infected_pkl = os.path.join(d, f'{prefix}stats_infected.pkl')
     with open(path_detected_pkl, 'wb') as f:
