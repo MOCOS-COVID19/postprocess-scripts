@@ -93,7 +93,7 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
         y = None
 
     coeff_path = os.path.join(d, f'{prefix}coeffs.pkl')
-    with(coeff_path, 'wb') as f:
+    with open(coeff_path, 'wb') as f:
         pickle.dump(coeffs, f)
 
     too_small = (1 - minus_tolerance) * minus_time
