@@ -99,7 +99,7 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
         ax.set_xticklabels([t[i] for i, v in enumerate(range(0, 61, 6))], rotation=30)
         ax.set_yticks([v for v in np.arange(plot_resolution_y, 0, -plot_resolution_y / 10.0)])
         ax.set_yticklabels(
-            [int(v) for v in np.arange(0, plot_resolution_y, plot_resolution_y / 10.0)])  # , list(np.arange(20)))
+            [int(v) for v in np.arange(0, max_y, max_y / 10.0)])  # , list(np.arange(20)))
         ylabel_pl = 'Liczba zdiagnozowanych przypadków'
         ylabel_en = 'detected cases'
         ylabel = ylabel_pl
