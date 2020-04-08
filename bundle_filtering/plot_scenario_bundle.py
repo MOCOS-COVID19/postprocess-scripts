@@ -26,8 +26,8 @@ def y_to_yid(y, max_y, plot_resolution_y):
 @click.option('--bundle-prefix', default='')
 @click.option('--max-x', type=int, default=60)
 @click.option('--max-y', type=int, default=80000)
-@click.option('--plot-resolution-x', type=int, default=400)
-@click.option('--plot-resolution-y', type=int, default=20000)
+@click.option('--plot-resolution-x', type=int, default=800)
+@click.option('--plot-resolution-y', type=int, default=40000)
 def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y):
     """
     Plots aggregated bundle for all q bundles.

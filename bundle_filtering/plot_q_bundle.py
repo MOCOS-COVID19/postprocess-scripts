@@ -30,8 +30,8 @@ def y_to_yid(y, max_y, plot_resolution_y):
 @click.option('--bundle-prefix', default='')
 @click.option('--max-x', type=int, default=60)
 @click.option('--max-y', type=int, default=80000)
-@click.option('--plot-resolution-x', type=int, default=400)
-@click.option('--plot-resolution-y', type=int, default=20000)
+@click.option('--plot-resolution-x', type=int, default=800)
+@click.option('--plot-resolution-y', type=int, default=40000)
 def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y):
     """
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
@@ -100,7 +100,8 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
                 prev_point = (x_p, y_p)
             array += zer
         fig, ax = plt.subplots(figsize=(10, 6))
-        array = ndimage.grey_dilation(array, size=(3, 3))
+        s = ndimage.generate_binary_structure(2, 1)
+        array = ndimage.grey_dilation(array, footprint=s)
         pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)), aspect='auto')
         ax.set_title("Prognozowane scenariusze rozwoju choroby", fontsize=18)
         cbb = plt.colorbar(pa, shrink=0.35)
