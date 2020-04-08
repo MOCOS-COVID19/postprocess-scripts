@@ -28,6 +28,24 @@ def infected_cases(df_r2):
     return df_r2.sort_values(by='contraction_time').contraction_time
 
 
+""" # TODO
+def icu_cases():
+    cond = [k for k, v in self._expected_case_severity.items() if v == ExpectedCaseSeverity.Critical]
+    critical = df_r1.loc[df_r1.index.isin(cond)]
+    plus = critical.t2.values
+    deceased = critical[~critical.tdeath.isna()]
+    survived = critical[critical.tdeath.isna()]
+    minus1 = survived.trecovery.values
+    minus2 = deceased.tdeath.values
+    max_time = df_r2.contraction_time.max(axis=0)
+    df_plus = pd.DataFrame({'t': plus, 'd': np.ones_like(plus)})
+    df_minus1 = pd.DataFrame({'t': minus1, 'd': -np.ones_like(minus1)})
+    df_minus2 = pd.DataFrame({'t': minus2, 'd': -np.ones_like(minus2)})
+    df = df_plus.append(df_minus1).append(df_minus2).sort_values(by='t')
+    df = df[df.t <= max_time]
+"""
+
+
 @click.command()
 @click.option('--path', type=click.Path(exists=True))
 @click.option('--zero', type=int, default=133)
@@ -106,7 +124,7 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
         y_.append(infected)
 
     if len(x_) > 0:
-        print(f'statistics,detected,infected')
+        print(f'statistics,detected,infected,icu')
         print(f'mean,{np.array(x_).mean()},{np.array(y_).mean()}')
         print(f'std,{np.array(x_).std()},{np.array(y_).std()}')
 

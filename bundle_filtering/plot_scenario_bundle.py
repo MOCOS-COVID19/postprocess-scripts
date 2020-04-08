@@ -76,27 +76,34 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
         for coeffs in coeffs_:
             p = np.poly1d(coeffs)
             y1 = np.exp(p(x1))
+            zer = np.zeros_like(array)
             for x_elem, y_elem in zip(x1, y1):
                 if y_elem > max_y:
                     continue
                 if x_elem > max_x:
                     continue
-                array[x_to_xid(x_elem, max_x, plot_resolution_x)][y_to_yid(y_elem, max_y, plot_resolution_y)] += 1.0
+                zer[x_to_xid(x_elem, max_x, plot_resolution_x)][y_to_yid(y_elem, max_y, plot_resolution_y)] += 1.0
+            array += zer
 
         fig, ax = plt.subplots(figsize=(10, 6))
-        pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.percentile(array, 99), aspect='auto')
-        ax.set_title("Wiązka prawdopodobnych krzywych", fontsize=18)
+        pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)),
+                       aspect='auto')
+        ax.set_title("Prognozowane scenariusze rozwoju choroby", fontsize=18)
         cbb = plt.colorbar(pa, shrink=0.35)
+        cbarlabel = 'Zagęszczenie trajektorii'
+        cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
 
         ax.set_xticks(np.arange(0, plot_resolution_x, plot_resolution_x / 10))
-        ax.set_xticklabels([f'dzień {v}' for v in range(0, 60, 6)], rotation=30)
+        t = ['07/04/20', '14/04/20', '21/04/20', '28/04/20', '05/05/20', '12/05/20', '19/05/20', '26/05/20',
+             '02/06/20', '09/06/20', '16/06/20']
+        ax.set_xticklabels([t[i] for i, v in enumerate(range(0, 61, 6))], rotation=30)
         ax.set_yticks([v for v in np.arange(plot_resolution_y, 0, -plot_resolution_y / 10.0)])
         ax.set_yticklabels(
             [int(v) for v in np.arange(0, plot_resolution_y, plot_resolution_y / 10.0)])  # , list(np.arange(20)))
         ylabel_pl = 'Liczba zdiagnozowanych przypadków'
         ylabel_en = 'detected cases'
         ylabel = ylabel_pl
-        xlabel_pl = 'Liczba dni od dziś'
+        xlabel_pl = 'Data'
         xlabel_en = 'Days from today'
         xlabel = xlabel_pl
         ax.set_ylabel(ylabel, fontsize=18)
