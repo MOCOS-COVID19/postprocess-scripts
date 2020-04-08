@@ -62,7 +62,7 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
             continue
 
         tries += 1
-        df = pd.read_csv(progression_path)
+        df = pd.read_csv(progression_path, na_values='None')
         detected = detected_cases(df).values
         df = None
 
