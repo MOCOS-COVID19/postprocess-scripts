@@ -91,15 +91,16 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
                     zer[prev_point[0]:(x_p + 1), prev_point[1]:(y_p + 1)] = 1.0
                 prev_point = (x_p, y_p)
             array += zer
+            print(prev_point[1])
 
         fig, ax = plt.subplots(figsize=(10, 6))
         pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)),
                        aspect='auto')
-        ax.set_title("Prognozowane scenariusze rozwoju choroby", fontsize=18)
-        cbb = plt.colorbar(pa, shrink=0.35)
+        #ax.set_title("Prognozowane scenariusze rozwoju choroby", fontsize=18)
+        cbb = plt.colorbar(pa, shrink=0.35, location='left')
         cbarlabel = 'Zagęszczenie trajektorii'
         cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
-
+        ax.yaxis.tick_right()
         ax.set_xticks(np.arange(0, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
         t = ['07/04/20', '14/04/20', '21/04/20', '28/04/20', '05/05/20', '12/05/20', '19/05/20', '26/05/20',
              '02/06/20', '09/06/20', '16/06/20']
