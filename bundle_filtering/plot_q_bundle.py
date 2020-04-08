@@ -70,6 +70,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
                 with open(coeff_path, 'rb') as f:
                     coeffs = pickle.load(f)
                     coeffs_.extend(coeffs)
+                successes += 1
             else:
                 print(f'cannot read - {coeff_path} do not exist!')
                 continue
