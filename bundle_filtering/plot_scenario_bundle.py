@@ -100,13 +100,13 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
         cbarlabel = 'Zagęszczenie trajektorii'
         cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
 
-        ax.set_xticks(np.arange(0, plot_resolution_x, 7 * plot_resolution_x / max_x))
+        ax.set_xticks(np.arange(0, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
         t = ['07/04/20', '14/04/20', '21/04/20', '28/04/20', '05/05/20', '12/05/20', '19/05/20', '26/05/20',
              '02/06/20', '09/06/20', '16/06/20']
         ax.set_xticklabels([t[i] for i, v in enumerate(range(0, max_x + 1, 7))], rotation=30)
-        ax.set_yticks([v for v in np.arange(plot_resolution_y, 0, -plot_resolution_y / 10.0)])
+        ax.set_yticks([v for v in np.arange(plot_resolution_y, -1, -plot_resolution_y / 10.0)])
         ax.set_yticklabels(
-            [int(v) for v in np.arange(0, max_y, max_y / 10.0)])  # , list(np.arange(20)))
+            [int(v) for v in np.arange(0, max_y + 1, max_y / 10.0)])  # , list(np.arange(20)))
         ylabel_pl = 'Liczba zdiagnozowanych przypadków'
         ylabel_en = 'detected cases'
         ylabel = ylabel_pl
