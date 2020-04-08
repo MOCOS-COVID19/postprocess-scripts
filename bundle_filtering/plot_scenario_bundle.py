@@ -30,7 +30,7 @@ def y_to_yid(y, max_y, plot_resolution_y):
 @click.option('--plot-resolution-y', type=int, default=20000)
 def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y):
     """
-    Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
+    Plots aggregated bundle for all q bundles.
 
     :param path: path to set of simulations e.g. "<outputdir>/<experiment_root>/"
     :param bundle_prefix: string prefix for reading bundle coordinations (may be blank)
@@ -72,17 +72,24 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
 
     if successes > 0:
         array = np.zeros((plot_resolution_x, plot_resolution_y))
-        x1 = np.arange(60000) / 1000
+        x1 = np.arange(max_x * 1000) / 1000
         for coeffs in coeffs_:
             p = np.poly1d(coeffs)
             y1 = np.exp(p(x1))
             zer = np.zeros_like(array)
+            prev_point = None
             for x_elem, y_elem in zip(x1, y1):
                 if y_elem > max_y:
                     continue
                 if x_elem > max_x:
                     continue
-                zer[x_to_xid(x_elem, max_x, plot_resolution_x)][y_to_yid(y_elem, max_y, plot_resolution_y)] += 1.0
+                x_p = x_to_xid(x_elem, max_x, plot_resolution_x)
+                y_p = y_to_yid(y_elem, max_y, plot_resolution_y)
+                if prev_point is None:
+                    zer[x_p, y_p] = 1.0
+                else:
+                    zer[prev_point[0]:(x_p + 1), prev_point[1]:(y_p + 1)] = 1.0
+                prev_point = (x_p, y_p)
             array += zer
 
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -93,10 +100,10 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
         cbarlabel = 'Zagęszczenie trajektorii'
         cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
 
-        ax.set_xticks(np.arange(0, plot_resolution_x, plot_resolution_x / 10))
+        ax.set_xticks(np.arange(0, plot_resolution_x, 7 * plot_resolution_x / max_x))
         t = ['07/04/20', '14/04/20', '21/04/20', '28/04/20', '05/05/20', '12/05/20', '19/05/20', '26/05/20',
              '02/06/20', '09/06/20', '16/06/20']
-        ax.set_xticklabels([t[i] for i, v in enumerate(range(0, 61, 6))], rotation=30)
+        ax.set_xticklabels([t[i] for i, v in enumerate(range(0, max_x + 1, 7))], rotation=30)
         ax.set_yticks([v for v in np.arange(plot_resolution_y, 0, -plot_resolution_y / 10.0)])
         ax.set_yticklabels(
             [int(v) for v in np.arange(0, max_y, max_y / 10.0)])  # , list(np.arange(20)))

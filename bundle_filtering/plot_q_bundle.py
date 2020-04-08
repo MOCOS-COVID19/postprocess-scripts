@@ -2,6 +2,7 @@ import pickle
 import click
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy import ndimage
 import os
 
 
@@ -79,29 +80,37 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             pickle.dump(coeffs_, f)
     if successes > 0:
         array = np.zeros((plot_resolution_x, plot_resolution_y))
-        x1 = np.arange(60000)/1000
+        x1 = np.arange(max_x * 1000)/1000
         for coeffs in coeffs_:
             p = np.poly1d(coeffs)
             y1 = np.exp(p(x1))
             zer = np.zeros_like(array)
+            prev_point = None
             for x_elem, y_elem in zip(x1, y1):
                 if y_elem > max_y:
                     continue
                 if x_elem > max_x:
                     continue
-                zer[x_to_xid(x_elem, max_x, plot_resolution_x)][y_to_yid(y_elem, max_y, plot_resolution_y)] += 1.0
+                x_p = x_to_xid(x_elem, max_x, plot_resolution_x)
+                y_p = y_to_yid(y_elem, max_y, plot_resolution_y)
+                if prev_point is None:
+                    zer[x_p, y_p] = 1.0
+                else:
+                    zer[prev_point[0]:(x_p+1), prev_point[1]:(y_p+1)] = 1.0
+                prev_point = (x_p, y_p)
             array += zer
         fig, ax = plt.subplots(figsize=(10, 6))
+        array = ndimage.grey_dilation(array, size=(3, 3))
         pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)), aspect='auto')
         ax.set_title("Prognozowane scenariusze rozwoju choroby", fontsize=18)
         cbb = plt.colorbar(pa, shrink=0.35)
         cbarlabel = 'Zagęszczenie trajektorii'
         cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
 
-        ax.set_xticks(np.arange(0, plot_resolution_x, plot_resolution_x / 10))
+        ax.set_xticks(np.arange(0, plot_resolution_x, 7 * plot_resolution_x / max_x))
         t = ['07/04/20', '14/04/20', '21/04/20', '28/04/20', '05/05/20', '12/05/20', '19/05/20', '26/05/20',
              '02/06/20', '09/06/20', '16/06/20']
-        ax.set_xticklabels([t[i] for i, v in enumerate(range(0, 61, 6))], rotation=30)
+        ax.set_xticklabels([t[i] for i, v in enumerate(range(0, max_x + 1, 7))], rotation=30)
         ax.set_yticks([v for v in np.arange(plot_resolution_y, 0, -plot_resolution_y / 10.0)])
         ax.set_yticklabels(
             [int(v) for v in np.arange(0, max_y, max_y / 10.0)])  # , list(np.arange(20)))
