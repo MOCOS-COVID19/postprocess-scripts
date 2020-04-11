@@ -36,8 +36,9 @@ def y_to_yid(y, max_y, plot_resolution_y):
 @click.option('--plot-resolution-x', type=int, default=800)
 @click.option('--plot-resolution-y', type=int, default=40000)
 @click.option('--begin-date', default='20200410')
+@click.option('--sliding-window-length', type=int, default=1)
 def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y,
-           begin_date):
+           begin_date, sliding_window_length):
     """
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
@@ -53,6 +54,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
     :param plot_resolution_x: number of points on x axis (e.g. 200)
     :param plot_resolution_y: number of points on y axis (e.g. 200)
     :param begin_date: for xaxis
+    :param sliding_window_length: for correctly finding data from the previous step (process_range_of_simulations)
     :return:
     """
     d = path
@@ -77,16 +79,26 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             if not os.path.basename(sub_).startswith(sim_filter):
                 continue
             bundle_dir = os.path.join(sub_, 'outputs', outputs_id)
-            coeff_path = os.path.join(bundle_dir, f'{bundle_prefix}coeffs.pkl')
+            coeff_path = os.path.join(bundle_dir, f'{bundle_prefix}coeffs_{sliding_window_length}.pkl')
             if os.path.exists(coeff_path):
                 with open(coeff_path, 'rb') as f:
                     coeffs = pickle.load(f)
                     coeffs_.extend(coeffs)
                 successes += 1
+            elif sliding_window_length == 1:
+                coeff_path = os.path.join(bundle_dir, f'{bundle_prefix}coeffs.pkl')
+                if os.path.exists(coeff_path):
+                    with open(coeff_path, 'rb') as f:
+                        coeffs = pickle.load(f)
+                        coeffs_.extend(coeffs)
+                    successes += 1
+                else:
+                    print(f'cannot read - {coeff_path} do not exist!')
+                    continue
             else:
                 print(f'cannot read - {coeff_path} do not exist!')
                 continue
-            x_path = os.path.join(bundle_dir, f'{bundle_prefix}x.pkl')
+            x_path = os.path.join(bundle_dir, f'{bundle_prefix}x_{sliding_window_length}.pkl')
             if os.path.exists(x_path):
                 with open(x_path, 'rb') as f:
                     x = pickle.load(f)

@@ -42,9 +42,9 @@ def avg_array(x, n):
 
 @click.command()
 @click.option('--path', type=click.Path(exists=True))
-@click.option('--zero', type=int, default=133)
-@click.option('--minus', type=int, default=81)
-@click.option('--minus-days', type=int, default=7)
+@click.option('--zero', type=float, default=133.0)
+@click.option('--minus', type=float, default=81.0)
+@click.option('--minus-days', type=float, default=7.0)
 @click.option('--minus-tolerance', type=float, default=0.1)
 @click.option('--days', type=int, default=60)
 @click.option('--prefix', default='')
