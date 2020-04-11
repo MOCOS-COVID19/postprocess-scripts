@@ -25,7 +25,10 @@ def detected_cases(df_r1):
 
 
 def n_days_back(x, ref, n):
-    return 1 + np.argmax(x[x <= (ref - n)])
+    filtered = x[x <= (ref - n)]
+    if len(filtered) == 0:
+        return 0
+    return 1 + np.argmax(filtered)
 
 
 def n_avg(x, ref, n):
