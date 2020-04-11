@@ -3,6 +3,7 @@ import click
 import pandas as pd
 import numpy as np
 import os
+from matplotlib import pyplot as plt
 
 
 def detected_cases(df_r1):
@@ -23,6 +24,22 @@ def detected_cases(df_r1):
     return df.sort_values(by='tdetection').tdetection
 
 
+def n_days_back(x, ref, n):
+    return 1 + np.argmax(x[x <= (ref - n)])
+
+
+def n_avg(x, ref, n):
+    avg = 0.0
+    for i in np.arange(n):
+        avg += n_days_back(x, ref, i) / n
+    return avg
+
+
+def avg_array(x, n):
+    avg = [n_avg(x, elem, n) for elem in x]
+    return np.array(avg)
+
+
 @click.command()
 @click.option('--path', type=click.Path(exists=True))
 @click.option('--zero', type=int, default=133)
@@ -31,7 +48,8 @@ def detected_cases(df_r1):
 @click.option('--minus-tolerance', type=float, default=0.1)
 @click.option('--days', type=int, default=60)
 @click.option('--prefix', default='')
-def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
+@click.option('--sliding-window-length', type=int, default=1)
+def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix, sliding_window_length):
     """
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
@@ -42,9 +60,10 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
     :param minus_tolerance: fraction of "minus" that is tolerated (e.g. 0.1*minus)
     :param days: time horizon used for saving forecast bundle files (e.g. 60)
     :param prefix: file prefix for storing bundle coordinations (may be blank)
+    :param sliding_window_length: if 1, use values for zero and minus, if >1, then use avg over last sliding_window_length days
     :return:
     """
-
+    assert sliding_window_length >= 1
     d = path
     list_subfolders_with_paths = [f.path for f in os.scandir(d) if f.is_dir()]
     zero_time = zero
@@ -53,6 +72,7 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
     coeffs = []
     tries = 0
     fails = []
+    x_ = []
     for sub_ in list_subfolders_with_paths:
         if os.path.basename(sub_).startswith('agg'):
             continue
@@ -66,35 +86,46 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
         detected = detected_cases(df).values
         df = None
 
-        if len(detected) <= zero_time:
+        if n_avg(detected, detected[-1], sliding_window_length) <= zero_time:
             continue
-
-        t0 = detected[zero_time]
+        avg_detected = avg_array(detected, sliding_window_length)
+        zero_time_av = np.argmax(avg_detected[avg_detected <= zero_time])
+        t0 = detected[zero_time_av]
         detected = detected - t0
+
         filt_detected = detected[detected <= - minus_days]
         if len(filt_detected) == 0:
             continue
 
         arg_tminus = np.argmax(filt_detected)
 
-        if np.abs(arg_tminus - minus_time) > minus_tolerance * minus_time:
-            fails.append(arg_tminus)
+        if np.abs(avg_detected[arg_tminus] - minus_time) > minus_tolerance * minus_time:
+            fails.append(avg_detected[arg_tminus])
             continue
 
         successes += 1
-        x = detected[0 <= detected]
+        x = detected[detected >= 0]
         x = x[x <= days]
-        y = np.arange(zero_time, zero_time + len(x))
+        # TODO: if we want to display bundles for averages instead:
+        # y = avg_detected[zero_time_av:zero_time_av + len(x)]
+        y = np.arange(zero_time_av + 1, zero_time_av + 1 + len(x))
         coeff = np.polyfit(x, np.log(y), 5)
         coeffs.append(coeff)
         print(f'{sub_},{coeff}')
+        x = detected[detected <= 0]
+        x_.append(x)
+        # TODO: if we want to display bundles for averages instead, we need to store y_ as well
         detected = None
         x = None
         y = None
 
-    coeff_path = os.path.join(d, f'{prefix}coeffs.pkl')
+    coeff_path = os.path.join(d, f'{prefix}coeffs_{sliding_window_length}.pkl')
     with open(coeff_path, 'wb') as f:
         pickle.dump(coeffs, f)
+
+    x_path = os.path.join(d, f'{prefix}x_{sliding_window_length}.pkl')
+    with open(x_path, 'wb') as f:
+        pickle.dump(x_, f)
 
     too_small = (1 - minus_tolerance) * minus_time
     too_large = (1 + minus_tolerance) * minus_time

@@ -1,8 +1,11 @@
 import pickle
 import click
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from dateutil import parser
 from scipy import ndimage
+import datetime as dt
 import os
 
 
@@ -32,7 +35,9 @@ def y_to_yid(y, max_y, plot_resolution_y):
 @click.option('--max-y', type=int, default=80000)
 @click.option('--plot-resolution-x', type=int, default=800)
 @click.option('--plot-resolution-y', type=int, default=40000)
-def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y):
+@click.option('--begin-date', default='20200410')
+def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y,
+           begin_date):
     """
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
@@ -47,15 +52,21 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
     :param max_y: max value for visualization (e.g. 20000) - trajectories with larger than max_y cases will be trimmed
     :param plot_resolution_x: number of points on x axis (e.g. 200)
     :param plot_resolution_y: number of points on y axis (e.g. 200)
+    :param begin_date: for xaxis
     :return:
     """
     d = path
     coeffs_path = os.path.join(d, f'{bundle_prefix}coeffs_{q_id}.pkl')
+    x__path = os.path.join(d, f'{bundle_prefix}x_{q_id}.pkl')
     coeffs_ = []
+    x_ = []
     successes = 0
     if os.path.exists(coeffs_path):
         with open(coeffs_path, 'rb') as f:
             coeffs_ = pickle.load(f)
+        if os.path.exists(x__path):
+            with open(x__path, 'wb') as f:
+                x_ = pickle.load(f)
         successes = 1
     else:
         list_subfolders_with_paths = [f.path for f in os.scandir(d) if f.is_dir()]
@@ -75,9 +86,16 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             else:
                 print(f'cannot read - {coeff_path} do not exist!')
                 continue
+            x_path = os.path.join(bundle_dir, f'{bundle_prefix}x.pkl')
+            if os.path.exists(x_path):
+                with open(x_path, 'rb') as f:
+                    x = pickle.load(f)
+                    x_.extend(x)
         print(successes)
         with open(coeffs_path, 'wb') as f:
             pickle.dump(coeffs_, f)
+        with open(x__path, 'wb') as f:
+            pickle.dump(x_, f)
     if successes > 0:
         array = np.zeros((plot_resolution_x, plot_resolution_y))
         x1 = np.arange(max_x * 1000)/1000
@@ -103,14 +121,16 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
         s = ndimage.generate_binary_structure(2, 1)
         array = ndimage.grey_dilation(array, footprint=s)
         pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)), aspect='auto')
-        ax.set_title("Prognozowane scenariusze rozwoju choroby", fontsize=18)
+        ax.set_title(f'q={q_id}, ({bundle_prefix.strip("_")})', fontsize=18)
         cbb = plt.colorbar(pa, shrink=0.35)
         cbarlabel = 'Zagęszczenie trajektorii'
         cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
 
         ax.set_xticks(np.arange(0, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
-        t = ['07/04/20', '14/04/20', '21/04/20', '28/04/20', '05/05/20', '12/05/20', '19/05/20', '26/05/20',
-             '02/06/20', '09/06/20', '16/06/20']
+        now = parser.parse(begin_date)
+        then = now + dt.timedelta(days=max_x + 1)
+        days = mdates.drange(now, then, dt.timedelta(days=7))
+        t = [dt.datetime.fromordinal(int(day)).strftime('%d/%m/%y') for day in days]
         ax.set_xticklabels([t[i] for i, v in enumerate(range(0, max_x + 1, 7))], rotation=30)
         ax.set_yticks([v for v in np.arange(plot_resolution_y, -1, -plot_resolution_y / 10.0)])
         ax.set_yticklabels(
@@ -125,6 +145,15 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
         ax.set_xlabel(xlabel, fontsize=18, labelpad=16)
         plt.tight_layout()
         plt.savefig(os.path.join(d, f'bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
+        plt.close(fig)
+
+        # now draw back in time
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.set_title("Weryfikacja dla poprzednich dni", fontsize=18)
+        for x in x_:
+            ax.plot(x, np.arange(1, 1 + len(x)), 'r-')
+        plt.tight_layout()
+        plt.savefig(os.path.join(d, f'check_bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
         plt.close(fig)
 
 

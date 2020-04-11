@@ -2,6 +2,9 @@ import pickle
 import click
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
+from dateutil import parser
+import datetime as dt
 import os
 
 
@@ -28,7 +31,8 @@ def y_to_yid(y, max_y, plot_resolution_y):
 @click.option('--max-y', type=int, default=80000)
 @click.option('--plot-resolution-x', type=int, default=800)
 @click.option('--plot-resolution-y', type=int, default=40000)
-def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y):
+@click.option('--begin-date', default='20200410')
+def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y, begin_date):
     """
     Plots aggregated bundle for all q bundles.
 
@@ -39,6 +43,7 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
     :param max_y: max value for visualization (e.g. 20000) - trajectories with larger than max_y cases will be trimmed
     :param plot_resolution_x: number of points on x axis (e.g. 200)
     :param plot_resolution_y: number of points on y axis (e.g. 200)
+    :param begin_date: begin date for xaxis
     :return:
     """
 
@@ -97,13 +102,15 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
         pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)),
                        aspect='auto')
         #ax.set_title("Prognozowane scenariusze rozwoju choroby", fontsize=18)
-        cbb = plt.colorbar(pa, shrink=0.35, location='left')
+        cbb = fig.colorbar(pa, shrink=0.35, location='left')
         cbarlabel = 'Zagęszczenie trajektorii'
         cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
         ax.yaxis.tick_right()
         ax.set_xticks(np.arange(0, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
-        t = ['07/04/20', '14/04/20', '21/04/20', '28/04/20', '05/05/20', '12/05/20', '19/05/20', '26/05/20',
-             '02/06/20', '09/06/20', '16/06/20']
+        now = parser.parse(begin_date)
+        then = now + dt.timedelta(days=max_x + 1)
+        days = mdates.drange(now, then, dt.timedelta(days=7))
+        t = [dt.datetime.fromordinal(int(day)).strftime('%d/%m/%y') for day in days]
         ax.set_xticklabels([t[i] for i, v in enumerate(range(0, max_x + 1, 7))], rotation=30)
         ax.set_yticks([v for v in np.arange(plot_resolution_y, -1, -plot_resolution_y / 10.0)])
         def format_num(n):
