@@ -58,8 +58,8 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
     :return:
     """
     d = path
-    coeffs_path = os.path.join(d, f'{bundle_prefix}coeffs_{q_id}.pkl')
-    x__path = os.path.join(d, f'{bundle_prefix}x_{q_id}.pkl')
+    coeffs_path = os.path.join(d, f'{bundle_prefix}coeffs_{q_id}_{sliding_window_length}.pkl')
+    x__path = os.path.join(d, f'{bundle_prefix}x_{q_id}_{sliding_window_length}.pkl')
     coeffs_ = []
     x_ = []
     successes = 0
