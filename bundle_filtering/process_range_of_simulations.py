@@ -39,7 +39,7 @@ def n_avg(x, ref, n):
 
 
 def avg_array(x, n, max_len):
-    avg = [n_avg(x, elem, n) for elem in x[:max_len]]
+    avg = [n_avg(x, elem, n) for elem in x[:int(max_len)]]
     return np.array(avg)
 
 
