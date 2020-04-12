@@ -78,31 +78,32 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             print(f'basename: {os.path.basename(sub_)} vs filter: {sim_filter}')
             if not os.path.basename(sub_).startswith(sim_filter):
                 continue
-            bundle_dir = os.path.join(sub_, outputs_id)
-            coeff_path = os.path.join(bundle_dir, f'{bundle_prefix}coeffs_{sliding_window_length}.pkl')
-            if os.path.exists(coeff_path):
-                with open(coeff_path, 'rb') as f:
-                    coeffs = pickle.load(f)
-                    coeffs_.extend(coeffs)
-                successes += 1
-            elif sliding_window_length == 1:
-                coeff_path = os.path.join(bundle_dir, f'{bundle_prefix}coeffs.pkl')
+            #second option as a fallback
+            for bundle_dir in [os.path.join(sub_, 'outputs', outputs_id), os.path.join(sub_, outputs_id)]:
+                coeff_path = os.path.join(bundle_dir, f'{bundle_prefix}coeffs_{sliding_window_length}.pkl')
                 if os.path.exists(coeff_path):
                     with open(coeff_path, 'rb') as f:
                         coeffs = pickle.load(f)
                         coeffs_.extend(coeffs)
                     successes += 1
+                elif sliding_window_length == 1:
+                    coeff_path = os.path.join(bundle_dir, f'{bundle_prefix}coeffs.pkl')
+                    if os.path.exists(coeff_path):
+                        with open(coeff_path, 'rb') as f:
+                            coeffs = pickle.load(f)
+                            coeffs_.extend(coeffs)
+                        successes += 1
+                    else:
+                        print(f'cannot read - {coeff_path} do not exist!')
+                        continue
                 else:
                     print(f'cannot read - {coeff_path} do not exist!')
                     continue
-            else:
-                print(f'cannot read - {coeff_path} do not exist!')
-                continue
-            x_path = os.path.join(bundle_dir, f'{bundle_prefix}x_{sliding_window_length}.pkl')
-            if os.path.exists(x_path):
-                with open(x_path, 'rb') as f:
-                    x = pickle.load(f)
-                    x_.extend(x)
+                x_path = os.path.join(bundle_dir, f'{bundle_prefix}x_{sliding_window_length}.pkl')
+                if os.path.exists(x_path):
+                    with open(x_path, 'rb') as f:
+                        x = pickle.load(f)
+                        x_.extend(x)
         print(successes)
         with open(coeffs_path, 'wb') as f:
             pickle.dump(coeffs_, f)
