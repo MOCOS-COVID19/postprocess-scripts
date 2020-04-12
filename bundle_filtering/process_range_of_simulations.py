@@ -38,8 +38,8 @@ def n_avg(x, ref, n):
     return avg
 
 
-def avg_array(x, n):
-    avg = [n_avg(x, elem, n) for elem in x]
+def avg_array(x, n, max_len):
+    avg = [n_avg(x, elem, n) for elem in x[:max_len]]
     return np.array(avg)
 
 
@@ -91,7 +91,7 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix, sliding
 
         if n_avg(detected, detected[-1], sliding_window_length) <= zero_time:
             continue
-        avg_detected = avg_array(detected, sliding_window_length)
+        avg_detected = avg_array(detected, sliding_window_length, zero_time*2)
         zero_time_av = np.argmax(avg_detected[avg_detected <= zero_time])
         t0 = detected[zero_time_av]
         detected = detected - t0

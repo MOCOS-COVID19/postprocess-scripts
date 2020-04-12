@@ -67,7 +67,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
         with open(coeffs_path, 'rb') as f:
             coeffs_ = pickle.load(f)
         if os.path.exists(x__path):
-            with open(x__path, 'wb') as f:
+            with open(x__path, 'rb') as f:
                 x_ = pickle.load(f)
         successes = 1
     else:
@@ -78,7 +78,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             print(f'basename: {os.path.basename(sub_)} vs filter: {sim_filter}')
             if not os.path.basename(sub_).startswith(sim_filter):
                 continue
-            bundle_dir = os.path.join(sub_, 'outputs', outputs_id)
+            bundle_dir = os.path.join(sub_, outputs_id)
             coeff_path = os.path.join(bundle_dir, f'{bundle_prefix}coeffs_{sliding_window_length}.pkl')
             if os.path.exists(coeff_path):
                 with open(coeff_path, 'rb') as f:
