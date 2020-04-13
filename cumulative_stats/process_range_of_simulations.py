@@ -124,7 +124,7 @@ def runner(path, zero, minus, minus_days, minus_tolerance, days, prefix):
         y_.append(infected)
 
     if len(x_) > 0:
-        print(f'statistics,detected,infected,icu')
+        print(f'statistics,detected,infected')
         print(f'mean,{np.array(x_).mean()},{np.array(y_).mean()}')
         print(f'std,{np.array(x_).std()},{np.array(y_).std()}')
 
