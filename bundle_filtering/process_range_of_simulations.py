@@ -63,8 +63,13 @@ def avg_array(x, n, max_len):
     avg = [n_avg(x, elem, n) for elem in x[:int(max_len)]]
     return np.array(avg)
 
+def delayed_array(x, n, max_len):
+    count = np.arange(1, 1 + max_len)
+    delayed = [count[i] - n_days_back(x, elem, n) for i, elem in enumerate(x[:int(max_len)])]
+    return np.array(delayed)
+
 def every_nth(seq, seq2, step=0.1):
-    assert len(seq) == len(seq2)
+    assert len(seq) == len(seq2), f'{len(seq)} vs {len(seq2)}'
     ret = []
     ret2 = []
     while len(seq) > 0:
@@ -119,10 +124,12 @@ def runner(path, zero, minus, minus2, minus_days, minus2_days, minus_tolerance, 
     fails = []
     fails2 = []
     detected_check_ = []
+    detected_check_slide_ = []
     hospitalized_ = []
+    hospitalized_current_ = []
     infected_ = []
     detected_ = []
-    arrs = [detected_, hospitalized_, infected_]
+    arrs = [detected_, hospitalized_, infected_, hospitalized_current_]
     for i, sub_ in enumerate(list_subfolders_with_paths):
         print(sub_)
         if os.path.basename(sub_).startswith('agg'):
@@ -176,8 +183,7 @@ def runner(path, zero, minus, minus2, minus_days, minus2_days, minus_tolerance, 
         df = None
         hospitalized = hospitalized - t0
         infected = infected - t0
-
-        for i, arr in enumerate([detected, hospitalized, infected]):
+        for ij, arr in enumerate([detected, hospitalized, infected]):
             start_y = np.argmax(arr >= 0) + 1
             x = arr[arr >= 0]
             x = x[x <= days]
@@ -187,7 +193,16 @@ def runner(path, zero, minus, minus2, minus_days, minus2_days, minus_tolerance, 
             print(f'{len(x)} {len(y)}')
             x, y = every_nth(np.array(x), y, step=0.05)
             print(f'{len(x)} {len(y)}')
-            arrs[i].append(zip(x, y))
+            arrs[ij].append(zip(x, y))
+        x = hospitalized[hospitalized <= days]
+        y = delayed_array(x, 21, len(x))#np.arange(1, 1 + len(x)) - n_days_back(x, )
+        start_y = np.argmax(x >= 0)
+        x = x[start_y:]
+        y = y[start_y:]
+
+        x, y = every_nth(np.array(x), y, step=0.05)
+
+        hospitalized_current_.append(zip(x, y))
         #coeff = np.polyfit(x, np.log(y), 5)
         #coeffs.append(coeff)
         #print(f'{sub_},{coeff}')
@@ -197,6 +212,11 @@ def runner(path, zero, minus, minus2, minus_days, minus2_days, minus_tolerance, 
         x, y = every_nth(np.array(x), y, step=0.05)
         print(f'{len(x)} {len(y)}')
         detected_check_.append(zip(x, y))
+        x = detected[detected <= 0]
+        y = avg_detected[:len(x)]
+        x, y = every_nth(np.array(x), y, step=0.05)
+        print(f'{len(x)} {len(y)}')
+        detected_check_slide_.append(zip(x, y))
         # TODO: if we want to display bundles for averages instead, we need to store y_ as well
         detected = None
         infected = None
@@ -204,7 +224,7 @@ def runner(path, zero, minus, minus2, minus_days, minus2_days, minus_tolerance, 
         x = None
         y = None
 
-    for i, arr_str in enumerate(['detected', 'hospitalized', 'infected']):
+    for i, arr_str in enumerate(['detected', 'hospitalized', 'infected', 'hospitalized_current']):
         save_path = os.path.join(d, f'{prefix}{arr_str}_{sliding_window_length}.pkl')
         with open(save_path, 'wb') as f:
             pickle.dump(arrs[i], f)
@@ -212,6 +232,10 @@ def runner(path, zero, minus, minus2, minus_days, minus2_days, minus_tolerance, 
     x_path = os.path.join(d, f'{prefix}x_{sliding_window_length}.pkl')
     with open(x_path, 'wb') as f:
         pickle.dump(detected_check_, f)
+
+    x_path = os.path.join(d, f'{prefix}x_slide_{sliding_window_length}.pkl')
+    with open(x_path, 'wb') as f:
+        pickle.dump(detected_check_slide_, f)
 
     too_small = (1 - minus_tolerance) * minus_time
     too_large = (1 + minus_tolerance) * minus_time

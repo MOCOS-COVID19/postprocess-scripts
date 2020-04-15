@@ -62,11 +62,15 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
     detected_path = os.path.join(d, f'{bundle_prefix}detected_{q_id}_{sliding_window_length}.pkl')
     infected_path = os.path.join(d, f'{bundle_prefix}infected_{q_id}_{sliding_window_length}.pkl')
     hospitalized_path = os.path.join(d, f'{bundle_prefix}hospitalized_{q_id}_{sliding_window_length}.pkl')
+    hospitalized_current_path = os.path.join(d, f'{bundle_prefix}hospitalized_current_{q_id}_{sliding_window_length}.pkl')
     reverse_time_path = os.path.join(d, f'{bundle_prefix}x_{q_id}_{sliding_window_length}.pkl')
+    reverse_time_slide_path = os.path.join(d, f'{bundle_prefix}x_slide_{q_id}_{sliding_window_length}.pkl')
     detections_ = []
     infections_ = []
     hospitalizations_ = []
+    hospitalizations_current_ = []
     detections_reverse_time_ = []
+    detections_reverse_time_slide_ = []
     successes = 0
     if os.path.exists(detected_path):
         with open(detected_path, 'rb') as f:
@@ -77,9 +81,15 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
         if os.path.exists(hospitalized_path):
             with open(hospitalized_path, 'rb') as f:
                 hospitalizations_ = pickle.load(f)
+        if os.path.exists(hospitalized_current_path):
+            with open(hospitalized_current_path, 'rb') as f:
+                hospitalizations_current_ = pickle.load(f)
         if os.path.exists(reverse_time_path):
             with open(reverse_time_path, 'rb') as f:
                 detections_reverse_time_ = pickle.load(f)
+        if os.path.exists(reverse_time_slide_path):
+            with open(reverse_time_slide_path, 'rb') as f:
+                detections_reverse_time_slide_ = pickle.load(f)
         successes = 1
     else:
         list_subfolders_with_paths = [f.path for f in os.scandir(d) if f.is_dir()]
@@ -97,6 +107,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
                         detections_.extend(detections)
                     infected_path_ = os.path.join(bundle_dir, f'{bundle_prefix}infected_{sliding_window_length}.pkl')
                     hospitalized_path_ = os.path.join(bundle_dir, f'{bundle_prefix}hospitalized_{sliding_window_length}.pkl')
+                    hospitalized_current_path_ = os.path.join(bundle_dir, f'{bundle_prefix}hospitalized_current_{sliding_window_length}.pkl')
                     if os.path.exists(infected_path_):
                         with open(infected_path_, 'rb') as f:
                             infections = pickle.load(f)
@@ -105,6 +116,10 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
                         with open(hospitalized_path_, 'rb') as f:
                             hospitalizations = pickle.load(f)
                             hospitalizations_.extend(hospitalizations)
+                    if os.path.exists(hospitalized_current_path_):
+                        with open(hospitalized_current_path_, 'rb') as f:
+                            hospitalizations_current = pickle.load(f)
+                            hospitalizations_current_.extend(hospitalizations_current)
 
                     successes += 1
                 elif sliding_window_length == 1: # this is to have backward compatibility for a moment
@@ -125,6 +140,11 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
                     with open(x_path, 'rb') as f:
                         x = pickle.load(f)
                         detections_reverse_time_.extend(x)
+                x_path_slide = os.path.join(bundle_dir, f'{bundle_prefix}x_slide_{sliding_window_length}.pkl')
+                if os.path.exists(x_path_slide):
+                    with open(x_path_slide, 'rb') as f:
+                        x_slide = pickle.load(f)
+                        detections_reverse_time_slide_.extend(x_slide)
                 break
         print(successes)
         with open(detected_path, 'wb') as f:
@@ -133,8 +153,12 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             pickle.dump(infections_, f)
         with open(hospitalized_path, 'wb') as f:
             pickle.dump(hospitalizations_, f)
+        with open(hospitalized_current_path, 'wb') as f:
+            pickle.dump(hospitalizations_current_, f)
         with open(reverse_time_path, 'wb') as f:
             pickle.dump(detections_reverse_time_, f)
+        with open(reverse_time_slide_path, 'wb') as f:
+            pickle.dump(detections_reverse_time_slide_, f)
     if successes > 0:
         def draw(item, maxy, ylabel, filename_fig):
             array = np.zeros((plot_resolution_x, plot_resolution_y))
@@ -190,19 +214,22 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
         draw(detections_, max_y, 'Liczba zdiagnozowanych przypadków', f'bundle_{q_id}_{bundle_prefix}_detections.png')
         draw(infections_, max_y_infections, 'Liczba zakażonych', f'bundle_{q_id}_{bundle_prefix}_infections.png')
         draw(hospitalizations_, max_y_hospitalized, 'Liczba hospitalizacji (sumaryczna)', f'bundle_{q_id}_{bundle_prefix}_hospitalizations.png')
+        draw(hospitalizations_current_, max_y_hospitalized, 'Liczba hospitalizacji (bieżąca)',
+             f'bundle_{q_id}_{bundle_prefix}_hospitalizations_current.png')
 
         # now draw back in time
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.set_title("Weryfikacja dla poprzednich dni", fontsize=18)
         for reverse_time in detections_reverse_time_:
             x, y = zip(*reverse_time)
+            now = parser.parse(begin_date)
             x = [now + dt.timedelta(days=el) for el in x if el <= 0]
             ax.plot(x, y, 'r-')
         dat = pd.read_csv('../data/pl_detections.csv',
                           converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
         ax.plot('date', 'detected', 'k.', data=dat)
         ax.format_xdata = mdates.DateFormatter('%d/%m/%y')
-        ax.get_xaxis().set_major_locator(mdates.DayLocator(interval=14))
+        ax.get_xaxis().set_major_locator(mdates.DayLocator(interval=7))
         ax.get_xaxis().set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
         ylabel_pl = 'Liczba zdiagnozowanych przypadków'
         ylabel_en = 'detected cases'
@@ -217,6 +244,32 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
         plt.savefig(os.path.join(d, f'check_bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
         plt.close(fig)
 
+        # now draw back in time
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.set_title("Weryfikacja dla poprzednich dni - średnia", fontsize=18)
+        for reverse_time in detections_reverse_time_slide_:
+            x, y = zip(*reverse_time)
+            now = parser.parse(begin_date)
+            x = [now + dt.timedelta(days=el) for el in x if el <= 0]
+            ax.plot(x, y, 'r-')
+        dat = pd.read_csv('../data/pl_detections.csv',
+                          converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
+        ax.plot('date', 'average4', 'k.', data=dat)
+        ax.format_xdata = mdates.DateFormatter('%d/%m/%y')
+        ax.get_xaxis().set_major_locator(mdates.DayLocator(interval=7))
+        ax.get_xaxis().set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
+        ylabel_pl = 'Średnia z 4 dni \n liczby zdiagnozowanych przypadków'
+        ylabel_en = 'detected cases'
+        ylabel = ylabel_pl
+        xlabel_pl = 'Data'
+        xlabel_en = 'Days from today'
+        xlabel = xlabel_pl
+
+        ax.set_ylabel(ylabel, fontsize=18)
+        ax.set_xlabel(xlabel, fontsize=18, labelpad=16)
+        plt.tight_layout()
+        plt.savefig(os.path.join(d, f'check_slide_bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
+        plt.close(fig)
 
 if __name__ == '__main__':
     runner()
