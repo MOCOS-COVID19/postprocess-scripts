@@ -39,8 +39,9 @@ def y_to_yid(y, max_y, plot_resolution_y):
 @click.option('--plot-resolution-y', type=int, default=40000)
 @click.option('--begin-date', default='20200414')
 @click.option('--sliding-window-length', type=int, default=1)
+@click.option('--groundtruth-path')
 def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_y, max_y_hospitalized, max_y_infections,
-           plot_resolution_x, plot_resolution_y, begin_date, sliding_window_length):
+           plot_resolution_x, plot_resolution_y, begin_date, sliding_window_length, groundtruth_path=None):
     """
 
     :param path: path to set of simulations e.g. "<outputdir>/<experiment_root>/"
@@ -56,6 +57,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
     :param plot_resolution_y: number of points on y axis (e.g. 200)
     :param begin_date: for xaxis
     :param sliding_window_length: for correctly finding data from the previous step (process_range_of_simulations)
+    :param groundtruth_path path where groundtruth data is stored or None for no verification with real daily cases
     :return:
     """
     d = path
@@ -225,9 +227,11 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             now = parser.parse(begin_date)
             x = [now + dt.timedelta(days=el) for el in x if el <= 0]
             ax.plot(x, y, 'r-')
-        dat = pd.read_csv('../data/pl_detections.csv',
-                          converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
-        ax.plot('date', 'detected', 'k.', data=dat)
+        if groundtruth_path is not None and os.path.exists(groundtruth_path):
+            dat = pd.read_csv(groundtruth_path, converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
+            ax.plot('date', 'detected', 'k.', data=dat)
+        else:
+            print(f'groundtruth path {groundtruth_path} not found or not specified, ignoring')
         ax.format_xdata = mdates.DateFormatter('%d/%m/%y')
         ax.get_xaxis().set_major_locator(mdates.DayLocator(interval=7))
         ax.get_xaxis().set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
@@ -252,9 +256,11 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             now = parser.parse(begin_date)
             x = [now + dt.timedelta(days=el) for el in x if el <= 0]
             ax.plot(x, y, 'r-')
-        dat = pd.read_csv('../data/pl_detections.csv',
-                          converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
-        ax.plot('date', 'average4', 'k.', data=dat)
+        if groundtruth_path is not None and os.path.exists(groundtruth_path):
+            dat = pd.read_csv(groundtruth_path, converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
+            ax.plot('date', 'detected', 'k.', data=dat)
+        else:
+            print(f'groundtruth path {groundtruth_path} not found or not specified, ignoring')
         ax.format_xdata = mdates.DateFormatter('%d/%m/%y')
         ax.get_xaxis().set_major_locator(mdates.DayLocator(interval=7))
         ax.get_xaxis().set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
