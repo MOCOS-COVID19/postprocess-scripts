@@ -258,7 +258,7 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
             ax.plot(x, y, 'r-')
         if groundtruth_path is not None and os.path.exists(groundtruth_path):
             dat = pd.read_csv(groundtruth_path, converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
-            ax.plot('date', 'detected', 'k.', data=dat)
+            ax.plot('date', 'average4', 'k.', data=dat)
         else:
             print(f'groundtruth path {groundtruth_path} not found or not specified, ignoring')
         ax.format_xdata = mdates.DateFormatter('%d/%m/%y')
