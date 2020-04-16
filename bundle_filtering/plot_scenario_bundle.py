@@ -6,7 +6,7 @@ import matplotlib.dates as mdates
 from dateutil import parser
 import datetime as dt
 import os
-
+import pandas as pd
 
 def value_to_id(value, max_value, resolution):
     if value < 0:
@@ -29,10 +29,15 @@ def y_to_yid(y, max_y, plot_resolution_y):
 @click.option('--bundle-prefix', default='')
 @click.option('--max-x', type=int, default=60)
 @click.option('--max-y', type=int, default=80000)
+@click.option('--max-y-hospitalized', type=int, default=80000)
+@click.option('--max-y-infections', type=int, default=80000)
 @click.option('--plot-resolution-x', type=int, default=800)
 @click.option('--plot-resolution-y', type=int, default=40000)
-@click.option('--begin-date', default='20200410')
-def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution_y, begin_date):
+@click.option('--begin-date', default='20200414')
+@click.option('--sliding-window-length', type=int, default=1)
+@click.option('--groundtruth-path')
+def runner(path, bundle_prefix, max_x, max_y, max_y_hospitalized, max_y_infections,
+           plot_resolution_x, plot_resolution_y, begin_date, sliding_window_length, groundtruth_path=None):
     """
     Plots aggregated bundle for all q bundles.
 
@@ -46,94 +51,199 @@ def runner(path, bundle_prefix, max_x, max_y, plot_resolution_x, plot_resolution
     :param begin_date: begin date for xaxis
     :return:
     """
-
+    q_id = 'all'
     d = path
-    coeffs_path = os.path.join(d, f'{bundle_prefix}coeffs.pkl')
+    detected_path = os.path.join(d, f'{bundle_prefix}detected_{q_id}_{sliding_window_length}.pkl')
+    infected_path = os.path.join(d, f'{bundle_prefix}infected_{q_id}_{sliding_window_length}.pkl')
+    hospitalized_path = os.path.join(d, f'{bundle_prefix}hospitalized_{q_id}_{sliding_window_length}.pkl')
+    hospitalized_current_path = os.path.join(d, f'{bundle_prefix}hospitalized_current_{q_id}_{sliding_window_length}.pkl')
+    reverse_time_path = os.path.join(d, f'{bundle_prefix}x_{q_id}_{sliding_window_length}.pkl')
+    reverse_time_slide_path = os.path.join(d, f'{bundle_prefix}x_slide_{q_id}_{sliding_window_length}.pkl')
+    detections_ = []
+    infections_ = []
+    hospitalizations_ = []
+    hospitalizations_current_ = []
+    detections_reverse_time_ = []
+    detections_reverse_time_slide_ = []
 
     coeffs_ = []
     successes = 0
-    if os.path.exists(coeffs_path):
-        with open(coeffs_path, 'rb') as f:
-            coeffs_ = pickle.load(f)
+    if os.path.exists(detected_path):
+        with open(detected_path, 'rb') as f:
+            detections_ = pickle.load(f)
+        if os.path.exists(infected_path):
+            with open(infected_path, 'rb') as f:
+                infections_ = pickle.load(f)
+        if os.path.exists(hospitalized_path):
+            with open(hospitalized_path, 'rb') as f:
+                hospitalizations_ = pickle.load(f)
+        if os.path.exists(hospitalized_current_path):
+            with open(hospitalized_current_path, 'rb') as f:
+                hospitalizations_current_ = pickle.load(f)
+        if os.path.exists(reverse_time_path):
+            with open(reverse_time_path, 'rb') as f:
+                detections_reverse_time_ = pickle.load(f)
+        if os.path.exists(reverse_time_slide_path):
+            with open(reverse_time_slide_path, 'rb') as f:
+                detections_reverse_time_slide_ = pickle.load(f)
         successes = 1
     else:
         list_files_with_paths = [f.path for f in os.scandir(d) if f.is_file()]
         list_files_with_paths.sort()
-        sim_filter = f'{bundle_prefix}coeffs'
-
+        sim_filter_detected = f'{bundle_prefix}detected_'
+        sim_filter_infected = f'{bundle_prefix}infected_'
+        sim_filter_hospitalized = f'{bundle_prefix}hospitalized_'
+        sim_filter_hospitalized_current = f'{bundle_prefix}hospitalized_current_'
+        sim_filter_x = f'{bundle_prefix}x_'
+        sim_filter_x_slide = f'{bundle_prefix}x_slide_'
+        sims = [sim_filter_detected, sim_filter_infected, sim_filter_hospitalized,
+                sim_filter_hospitalized_current, sim_filter_x, sim_filter_x_slide]
+        arrays = [detections_, infections_, hospitalizations_,
+                  hospitalizations_current_, detections_reverse_time_, detections_reverse_time_slide_]
         for sub_ in list_files_with_paths:
-            if not os.path.basename(sub_).startswith(sim_filter):
-                continue
+            for sim, arr in zip(sims, arrays):
+                if os.path.basename(sub_).startswith(sim):
+                    if sim==sim_filter_x:
+                        if os.path.basename(sub_).startswith(sim_filter_x_slide):
+                            continue
+                    with open(sub_, 'rb') as f:
+                        elem = pickle.load(f)
+                        arr.extend(elem)
+                    successes += 1
+                    continue
 
-            with open(sub_, 'rb') as f:
-                coeffs = pickle.load(f)
-                coeffs_.extend(coeffs)
+        #########################
 
-            successes += 1
-
-        print(successes)
-        with open(coeffs_path, 'wb') as f:
-            pickle.dump(coeffs_, f)
+        with open(detected_path, 'wb') as f:
+            pickle.dump(detections_, f)
+        with open(infected_path, 'wb') as f:
+            pickle.dump(infections_, f)
+        with open(hospitalized_path, 'wb') as f:
+            pickle.dump(hospitalizations_, f)
+        with open(hospitalized_current_path, 'wb') as f:
+            pickle.dump(hospitalizations_current_, f)
+        with open(reverse_time_path, 'wb') as f:
+            pickle.dump(detections_reverse_time_, f)
+        with open(reverse_time_slide_path, 'wb') as f:
+            pickle.dump(detections_reverse_time_slide_, f)
 
     if successes > 0:
-        array = np.zeros((plot_resolution_x, plot_resolution_y))
-        x1 = np.arange(max_x * 1000) / 1000
-        for coeffs in coeffs_:
-            p = np.poly1d(coeffs)
-            y1 = np.exp(p(x1))
-            zer = np.zeros_like(array)
-            prev_point = None
-            for x_elem, y_elem in zip(x1, y1):
-                if y_elem > max_y:
-                    continue
-                if x_elem > max_x:
-                    continue
-                x_p = x_to_xid(x_elem, max_x, plot_resolution_x)
-                y_p = y_to_yid(y_elem, max_y, plot_resolution_y)
-                if prev_point is None:
-                    zer[x_p, y_p] = 1.0
-                else:
-                    zer[prev_point[0]:(x_p + 1), prev_point[1]:(y_p + 1)] = 1.0
-                prev_point = (x_p, y_p)
-            array += zer
-            print(prev_point[1])
 
+
+        q_id = 'all'
+        def draw(item, maxy, ylabel, filename_fig):
+            array = np.zeros((plot_resolution_x, plot_resolution_y))
+            # x1 = np.arange(max_x * 1000)/1000
+            for detections in item:
+                x1, y1 = zip(*detections)
+                # p = np.poly1d(coeffs)
+                # y1 = np.exp(p(x1))
+                zer = np.zeros_like(array)
+                prev_point = None
+                for x_elem, y_elem in zip(x1, y1):
+                    if y_elem > maxy:
+                        continue
+                    if x_elem > max_x:
+                        continue
+                    x_p = x_to_xid(x_elem, max_x, plot_resolution_x)
+                    y_p = y_to_yid(y_elem, maxy, plot_resolution_y)
+                    if prev_point is None:
+                        zer[x_p, y_p] = 1.0
+                    else:
+                        zer[prev_point[0]:(x_p + 1), prev_point[1]:(y_p + 1)] = 1.0
+                    prev_point = (x_p, y_p)
+                array += zer
+            fig, ax = plt.subplots(figsize=(10, 6))
+            # s = ndimage.generate_binary_structure(2, 1)
+            # array = ndimage.grey_dilation(array, footprint=s)
+            pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)),
+                           aspect='auto')
+            ax.set_title(f'q={q_id}, ({bundle_prefix.strip("_")})', fontsize=18)
+            cbb = plt.colorbar(pa, shrink=0.35)
+            cbarlabel = 'Zagęszczenie trajektorii'
+            cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
+
+            ax.set_xticks(np.arange(0, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
+            now = parser.parse(begin_date)
+            then = now + dt.timedelta(days=max_x + 1)
+            days = mdates.drange(now, then, dt.timedelta(days=7))
+            t = [dt.datetime.fromordinal(int(day)).strftime('%d/%m/%y') for day in days]
+            ax.set_xticklabels([t[i] for i, v in enumerate(range(0, max_x + 1, 7))], rotation=30)
+            ax.set_yticks([v for v in np.arange(plot_resolution_y, -1, -plot_resolution_y / 10.0)])
+            ax.set_yticklabels(
+                [int(v) for v in np.arange(0, maxy + 1, maxy / 10.0)])  # , list(np.arange(20)))
+
+            ax.set_ylabel(ylabel, fontsize=18)
+            xlabel_pl = 'Data'
+            xlabel_en = 'Days from today'
+            xlabel = xlabel_pl
+            ax.set_xlabel(xlabel, fontsize=18, labelpad=16)
+            plt.tight_layout()
+            plt.savefig(os.path.join(d, filename_fig), dpi=300)
+            plt.close(fig)
+
+        draw(detections_, max_y, 'Liczba zdiagnozowanych przypadków', f'bundle_{q_id}_{bundle_prefix}_detections.png')
+        draw(infections_, max_y_infections, 'Liczba zakażonych', f'bundle_{q_id}_{bundle_prefix}_infections.png')
+        draw(hospitalizations_, max_y_hospitalized, 'Liczba hospitalizacji (sumaryczna)', f'bundle_{q_id}_{bundle_prefix}_hospitalizations.png')
+        draw(hospitalizations_current_, max_y_hospitalized, 'Liczba hospitalizacji (bieżąca)',
+             f'bundle_{q_id}_{bundle_prefix}_hospitalizations_current.png')
+
+        # now draw back in time
         fig, ax = plt.subplots(figsize=(10, 6))
-        pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)),
-                       aspect='auto')
-        #ax.set_title("Prognozowane scenariusze rozwoju choroby", fontsize=18)
-        cbb = fig.colorbar(pa, shrink=0.35, location='left')
-        cbarlabel = 'Zagęszczenie trajektorii'
-        cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
-        ax.yaxis.tick_right()
-        ax.set_xticks(np.arange(0, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
-        now = parser.parse(begin_date)
-        then = now + dt.timedelta(days=max_x + 1)
-        days = mdates.drange(now, then, dt.timedelta(days=7))
-        t = [dt.datetime.fromordinal(int(day)).strftime('%d/%m/%y') for day in days]
-        ax.set_xticklabels([t[i] for i, v in enumerate(range(0, max_x + 1, 7))], rotation=30)
-        ax.set_yticks([v for v in np.arange(plot_resolution_y, -1, -plot_resolution_y / 10.0)])
-        def format_num(n):
-            a = str(n)
-            l = len(a)
-            x = []
-            while l > 3:
-                x.append(a[-3:])
-                a = a[:-3]
-                l -= 3
-            x.append(a)
-            return ' '.join(x[::-1])
-        ax.set_yticklabels([format_num(int(v)) for v in np.arange(0, max_y + 1, max_y / 10.0)])  # , list(np.arange(20)))
+        ax.set_title("Weryfikacja dla poprzednich dni", fontsize=18)
+        for reverse_time in detections_reverse_time_:
+            x, y = zip(*reverse_time)
+            now = parser.parse(begin_date)
+            x = [now + dt.timedelta(days=el) for el in x if el <= 0]
+            ax.plot(x, y, 'r-')
+        if groundtruth_path is not None and os.path.exists(groundtruth_path):
+            dat = pd.read_csv(groundtruth_path, converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
+            ax.plot('date', 'detected', 'k.', data=dat)
+        else:
+            print(f'groundtruth path {groundtruth_path} not found or not specified, ignoring')
+        ax.format_xdata = mdates.DateFormatter('%d/%m/%y')
+        ax.get_xaxis().set_major_locator(mdates.DayLocator(interval=7))
+        ax.get_xaxis().set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
         ylabel_pl = 'Liczba zdiagnozowanych przypadków'
         ylabel_en = 'detected cases'
         ylabel = ylabel_pl
         xlabel_pl = 'Data'
         xlabel_en = 'Days from today'
         xlabel = xlabel_pl
+
         ax.set_ylabel(ylabel, fontsize=18)
         ax.set_xlabel(xlabel, fontsize=18, labelpad=16)
         plt.tight_layout()
-        plt.savefig(os.path.join(d, f'bundle_all_{bundle_prefix}_test.png'), dpi=300)
+        plt.savefig(os.path.join(d, f'check_bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
+        plt.close(fig)
+
+        # now draw back in time
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.set_title("Weryfikacja dla poprzednich dni - średnia", fontsize=18)
+        for reverse_time in detections_reverse_time_slide_:
+            x, y = zip(*reverse_time)
+            now = parser.parse(begin_date)
+            x = [now + dt.timedelta(days=el) for el in x if el <= 0]
+            ax.plot(x, y, 'r-')
+        if groundtruth_path is not None and os.path.exists(groundtruth_path):
+            dat = pd.read_csv(groundtruth_path, converters={'date': (lambda x: parser.parse(x, dayfirst=True))})
+            ax.plot('date', 'average4', 'k.', data=dat)
+        else:
+            print(f'groundtruth path {groundtruth_path} not found or not specified, ignoring')
+        ax.format_xdata = mdates.DateFormatter('%d/%m/%y')
+        ax.get_xaxis().set_major_locator(mdates.DayLocator(interval=7))
+        ax.get_xaxis().set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
+        ylabel_pl = 'Średnia z 4 dni \n liczby zdiagnozowanych przypadków'
+        ylabel_en = 'detected cases'
+        ylabel = ylabel_pl
+        xlabel_pl = 'Data'
+        xlabel_en = 'Days from today'
+        xlabel = xlabel_pl
+
+        ax.set_ylabel(ylabel, fontsize=18)
+        ax.set_xlabel(xlabel, fontsize=18, labelpad=16)
+        plt.tight_layout()
+        plt.savefig(os.path.join(d, f'check_slide_bundle_{q_id}_{bundle_prefix}_test.png'), dpi=300)
         plt.close(fig)
 
 
