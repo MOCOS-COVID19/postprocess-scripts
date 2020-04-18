@@ -96,8 +96,9 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
     else:
         list_subfolders_with_paths = [f.path for f in os.scandir(d) if f.is_dir()]
         sim_filter = f'{simulation_prefix}_{q_id}_'
+        alternative_sim_filter = f'{simulation_prefix}_{q_id}'
         for sub_ in list_subfolders_with_paths:
-            if not os.path.basename(sub_).startswith(sim_filter):
+            if not os.path.basename(sub_).startswith(sim_filter) and not os.path.basename(sub_) == alternative_sim_filter:
                 continue
             #second option as a fallback
             for bundle_dir in [os.path.join(sub_, 'outputs', outputs_id), os.path.join(sub_, outputs_id)]:
