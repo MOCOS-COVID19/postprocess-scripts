@@ -173,9 +173,9 @@ def runner(path, simulation_prefix, q_id, outputs_id, bundle_prefix, max_x, max_
                 zer = np.zeros_like(array)
                 prev_point = None
                 for x_elem, y_elem in zip(x1, y1):
-                    if y_elem > maxy:
+                    if y_elem >= maxy:
                         continue
-                    if x_elem > max_x:
+                    if x_elem >= max_x:
                         continue
                     x_p = x_to_xid(x_elem, max_x, plot_resolution_x)
                     y_p = y_to_yid(y_elem, maxy, plot_resolution_y)
