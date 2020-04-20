@@ -48,7 +48,7 @@ def every_nth(seq, seq2, step=0.1):
 #@click.option('--zero-date', default='20200414')
 @click.command()
 @click.option('--path', type=click.Path(exists=True))
-@click.option('--offset_days', type=float, default=7.0)
+@click.option('--offset-days', type=float, default=7.0)
 @click.option('--offset-tolerance', type=float, default=0.05)
 @click.option('--days', type=int, default=60)
 @click.option('--prefix', default='')
