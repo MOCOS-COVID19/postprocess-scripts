@@ -114,17 +114,15 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
             fails.append(avg_detected[arg_tminus])
             continue
 
-        if minus > 0.0:
+        filt_detected = detected[detected <= offset_days]
+        if len(filt_detected) == 0:
+            continue
 
-            filt_detected = detected[detected <= offset_days]
-            if len(filt_detected) == 0:
-                continue
+        arg_tplus = np.argmax(filt_detected)
 
-            arg_tplus = np.argmax(filt_detected)
-
-            if np.abs(avg_detected[arg_tplus] - plus_cases) > offset_tolerance * plus_cases:
-                fails2.append(avg_detected[arg_tplus])
-                continue
+        if np.abs(avg_detected[arg_tplus] - plus_cases) > offset_tolerance * plus_cases:
+            fails2.append(avg_detected[arg_tplus])
+            continue
 
         successes += 1
 
@@ -176,12 +174,12 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
     print(f'bundle condition failing values: {fails}, '
           f'smaller than {too_small:.1f}: {len([fail for fail in fails if fail < too_small])}, '
           f'larger than {too_large:.1f}: {len([fail for fail in fails if fail > too_large])}')
-    if minus2 > 0.0:
-        too_small = (1 - offset_tolerance) * plus_cases
-        too_large = (1 + offset_tolerance) * plus_cases
-        print(f'bundle condition failing values: {fails2}, '
-              f'smaller than {too_small:.1f}: {len([fail for fail in fails2 if fail < too_small])}, '
-              f'larger than {too_large:.1f}: {len([fail for fail in fails2 if fail > too_large])}')
+
+    too_small = (1 - offset_tolerance) * plus_cases
+    too_large = (1 + offset_tolerance) * plus_cases
+    print(f'bundle condition failing values: {fails2}, '
+          f'smaller than {too_small:.1f}: {len([fail for fail in fails2 if fail < too_small])}, '
+          f'larger than {too_large:.1f}: {len([fail for fail in fails2 if fail > too_large])}')
 
     print(f'bundle success ratio: {successes}/{tries}')
 
