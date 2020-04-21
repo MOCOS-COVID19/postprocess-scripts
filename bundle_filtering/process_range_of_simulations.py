@@ -119,6 +119,8 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
     infected_ = []
     detected_ = []
 
+    dw_dets = pd.read_csv(groundtruth_path)
+
     minus_cases = dw_dets.average4.values[-15]
     zero_time = dw_dets.average4.values[-8]
     plus_cases = dw_dets.average4.values[-1]
