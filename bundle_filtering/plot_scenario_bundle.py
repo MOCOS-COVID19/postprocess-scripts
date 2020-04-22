@@ -219,7 +219,7 @@ def runner(path, bundle_prefix, max_x, max_y, max_y_hospitalized, max_y_infectio
 
         draw_back_in_time(detections_reverse_time_, 'detected', 'Weryfikacja dla poprzednich dni',
                           'Liczba zdiagnozowanych przypadków', f'check_bundle_{q_id}_{bundle_prefix}_test.png')
-        draw_back_in_time(detections_reverse_time_, 'average4', 'Weryfikacja dla poprzednich dni - średnia',
+        draw_back_in_time(detections_reverse_time_slide_, 'average4', 'Weryfikacja dla poprzednich dni - średnia',
                           'Średnia z 4 dni \n liczby zdiagnozowanych przypadków',
                           f'check_slide_bundle_{q_id}_{bundle_prefix}_test.png')
 
