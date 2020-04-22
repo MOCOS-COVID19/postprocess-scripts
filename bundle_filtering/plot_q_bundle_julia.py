@@ -52,7 +52,8 @@ def draw_back_in_time(reverse_array, df_y_column, title, ylabel, filename_fig, d
     plt.close(fig)
 
 
-def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id, bundle_prefix):
+def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id,
+         bundle_prefix, d):
     array = np.zeros((plot_resolution_x, plot_resolution_y))
     # x1 = np.arange(max_x * 1000)/1000
     for detections in item:
@@ -212,8 +213,11 @@ def runner(path, simulation_prefix, q_id, bundle_prefix, max_x, max_y, max_y_inf
         with open(reverse_time_slide_path, 'wb') as f:
             pickle.dump(detections_reverse_time_slide_, f)
     if successes > 0:
-        draw(detections_, max_y, 'Liczba zdiagnozowanych przypadków', f'bundle_{q_id}_{bundle_prefix}_detections.png', begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id, bundle_prefix)
-        draw(infections_, max_y_infections, 'Liczba zakażonych', f'bundle_{q_id}_{bundle_prefix}_infections.png', begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id, bundle_prefix)
+        draw(detections_, max_y, 'Liczba zdiagnozowanych przypadków',
+             f'bundle_{q_id}_{bundle_prefix}_detections.png', begin_date, max_x, plot_resolution_x, plot_resolution_y,
+             q_id, bundle_prefix, d)
+        draw(infections_, max_y_infections, 'Liczba zakażonych', f'bundle_{q_id}_{bundle_prefix}_infections.png',
+             begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id, bundle_prefix, d)
         draw_back_in_time(detections_reverse_time_, 'detected', 'Weryfikacja dla poprzednich dni',
                           'Liczba zdiagnozowanych przypadków', f'check_bundle_{q_id}_{bundle_prefix}_test.png',
                           d, begin_date, groundtruth_path)
