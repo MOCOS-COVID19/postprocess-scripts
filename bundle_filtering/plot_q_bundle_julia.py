@@ -8,20 +8,20 @@ import datetime as dt
 import os
 import pandas as pd
 
-def value_to_id(value, max_value, resolution):
-    if value < 0:
+def value_to_id(value, min_value, max_value, resolution):
+    if value < min_value:
         raise ValueError(f'{value} {max_value} {resolution}')
     if value > max_value:
         raise ValueError(f'{value} {max_value} {resolution}')
-    return int(value / max_value * resolution)
+    return int((value - min_value) / max_value * resolution)
 
 
-def x_to_xid(x, max_x, plot_resolution_x):
-    return value_to_id(x, max_x, plot_resolution_x)
+def x_to_xid(x, min_x, max_x, plot_resolution_x):
+    return value_to_id(x, min_x, max_x, plot_resolution_x)
 
 
 def y_to_yid(y, max_y, plot_resolution_y):
-    return value_to_id(y, max_y, plot_resolution_y)
+    return value_to_id(y, 0, max_y, plot_resolution_y)
 
 
 def draw_back_in_time(reverse_array, df_y_column, title, ylabel, filename_fig, d, begin_date, groundtruth_path):
@@ -53,7 +53,7 @@ def draw_back_in_time(reverse_array, df_y_column, title, ylabel, filename_fig, d
 
 
 def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id,
-         bundle_prefix, d):
+         bundle_prefix, d, days_offset):
     array = np.zeros((plot_resolution_x, plot_resolution_y))
     # x1 = np.arange(max_x * 1000)/1000
     for detections in item:
@@ -67,7 +67,7 @@ def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x,
                 continue
             if x_elem >= max_x:
                 continue
-            x_p = x_to_xid(x_elem, max_x, plot_resolution_x)
+            x_p = x_to_xid(x_elem, -days_offset, max_x, plot_resolution_x)
             y_p = y_to_yid(y_elem, maxy, plot_resolution_y)
             if prev_point is None:
                 zer[x_p, y_p] = 1.0
@@ -85,12 +85,13 @@ def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x,
     cbarlabel = 'Zagęszczenie trajektorii'
     cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
 
-    ax.set_xticks(np.arange(0, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
+    ax.set_xticks(np.arange(-days_offset, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
     now = parser.parse(begin_date)
-    then = now + dt.timedelta(days=max_x + 1)
-    days = mdates.drange(now, then, dt.timedelta(days=7))
+    before = now - dt.timedelta(days=days_offset)
+    later = now + dt.timedelta(days=max_x + 1)
+    days = mdates.drange(before, later, dt.timedelta(days=7))
     t = [dt.datetime.fromordinal(int(day)).strftime('%d/%m/%y') for day in days]
-    ax.set_xticklabels([t[i] for i, v in enumerate(range(0, max_x + 1, 7))], rotation=30)
+    ax.set_xticklabels([t[i] for i, v in enumerate(range(-days_offset, max_x + 1, 7))], rotation=30)
     ax.set_yticks([v for v in np.arange(plot_resolution_y, -1, -plot_resolution_y / 10.0)])
     ax.set_yticklabels(
         [int(v) for v in np.arange(0, maxy + 1, maxy / 10.0)])  # , list(np.arange(20)))
@@ -118,8 +119,10 @@ def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x,
 @click.option('--begin-date', default='20200421')
 @click.option('--sliding-window-length', type=int, default=1)
 @click.option('--groundtruth-path')
+@click.option('--days-offset', type=int)
 def runner(path, simulation_prefix, q_id, bundle_prefix, max_x, max_y, max_y_infections,
-           plot_resolution_x, plot_resolution_y, begin_date, sliding_window_length, groundtruth_path=None):
+           plot_resolution_x, plot_resolution_y, begin_date, sliding_window_length, groundtruth_path=None,
+           days_offset=0):
     """
 
     :param path: path to set of simulations e.g. "<outputdir>/<experiment_root>/"
@@ -134,6 +137,7 @@ def runner(path, simulation_prefix, q_id, bundle_prefix, max_x, max_y, max_y_inf
     :param begin_date: for xaxis
     :param sliding_window_length: for correctly finding data from the previous step (process_range_of_simulations)
     :param groundtruth_path path where groundtruth data is stored or None for no verification with real daily cases
+    :param days_offset: use if you created path with synchronization point in the past and you would like to see it
     :return:
     """
     d = path
@@ -215,9 +219,9 @@ def runner(path, simulation_prefix, q_id, bundle_prefix, max_x, max_y, max_y_inf
     if successes > 0:
         draw(detections_, max_y, 'Liczba zdiagnozowanych przypadków',
              f'bundle_{q_id}_{bundle_prefix}_detections.png', begin_date, max_x, plot_resolution_x, plot_resolution_y,
-             q_id, bundle_prefix, d)
+             q_id, bundle_prefix, d, days_offset)
         draw(infections_, max_y_infections, 'Liczba zakażonych', f'bundle_{q_id}_{bundle_prefix}_infections.png',
-             begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id, bundle_prefix, d)
+             begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id, bundle_prefix, d, days_offset)
         draw_back_in_time(detections_reverse_time_, 'detected', 'Weryfikacja dla poprzednich dni',
                           'Liczba zdiagnozowanych przypadków', f'check_bundle_{q_id}_{bundle_prefix}_test.png',
                           d, begin_date, groundtruth_path)
