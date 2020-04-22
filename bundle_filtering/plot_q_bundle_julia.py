@@ -30,6 +30,7 @@ def draw_back_in_time(reverse_array, df_y_column, title, ylabel, filename_fig, d
     ax.set_title(title, fontsize=18)
     for reverse_time in reverse_array:
         x, y = zip(*reverse_time)
+        print(x)
         x = x.astype(np.float64)
         now = parser.parse(begin_date)
         x = [now + dt.timedelta(days=el) for el in x if el <= 0]
