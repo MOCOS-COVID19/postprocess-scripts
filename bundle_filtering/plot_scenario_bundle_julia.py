@@ -190,10 +190,6 @@ def runner(path, bundle_prefix, max_x, max_y, max_y_infections,
             pickle.dump(detections_, f)
         with open(infected_path, 'wb') as f:
             pickle.dump(infections_, f)
-        with open(hospitalized_path, 'wb') as f:
-            pickle.dump(hospitalizations_, f)
-        with open(hospitalized_current_path, 'wb') as f:
-            pickle.dump(hospitalizations_current_, f)
         with open(reverse_time_path, 'wb') as f:
             pickle.dump(detections_reverse_time_, f)
         with open(reverse_time_slide_path, 'wb') as f:
