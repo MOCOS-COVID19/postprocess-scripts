@@ -116,7 +116,7 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
 
         if n_avg(detected, detected[-1], sliding_window_length) <= zero_time:
             continue
-        avg_detected = avg_array(detected, sliding_window_length, plus_cases*1.4)
+        avg_detected = avg_array(detected, sliding_window_length, zero_time*1.4)
         zero_time_av = np.argmax(avg_detected[avg_detected <= zero_time])
         t0 = detected[zero_time_av]
         detected = detected - t0
