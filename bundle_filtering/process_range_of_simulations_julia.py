@@ -44,18 +44,34 @@ def every_nth(seq, seq2, step=0.1):
         seq2 = seq2[id:]
     return np.array(ret), np.array(ret2)
 
+
+def compress(x, y, step, verbose=True):
+    x = np.array(x)
+    y = np.array(y)
+    if verbose:
+        print(f'Length before compression: {len(x)} {len(y)}')
+    if step > 0:
+        x, y = every_nth(x, y, step=step)
+        if verbose:
+            print(f'After compressing: {len(x)} {len(y)}')
+    elif verbose:
+        print(f'step: {step} <= 0, so we are not compressing trajectories')
+    return x, y
+
+
 #@click.option('--data', type=click.Path(exists=True))
 #@click.option('--zero-date', default='20200414')
 @click.command()
 @click.option('--path', type=click.Path(exists=True))
-@click.option('--offset-days', type=float, default=7.0)
+@click.option('--offset-days', type=int, default=7)
 @click.option('--offset-tolerance', type=float, default=0.05)
 @click.option('--days', type=int, default=60)
 @click.option('--prefix', default='')
 @click.option('--sliding-window-length', type=int, default=1)
 @click.option('--groundtruth-path')
 @click.option('--file-id', default='output.jld2')
-def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_length, groundtruth_path, file_id):
+@click.option('--step', type=float, default=0.05)
+def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_length, groundtruth_path, file_id, step):
     """
     Calculates how many sample paths are fitting 2-points criteria and saves bundles to files.
 
@@ -67,6 +83,7 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
     :param sliding_window_length: if 1, use values for zero and minus, if >1, then use avg over last sliding_window_length days
     :param groundtruth_path
     :param file_id
+    :param step: what is the distance between two points in bundle (we are compressing the trajectory). Put 0 or less to not compress
     :return:
     """
     assert sliding_window_length >= 1
@@ -86,8 +103,8 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
         return
     f = h5py.File(julia_path, "r")
     dw_dets = pd.read_csv(groundtruth_path)
-    minus_cases = dw_dets.average4.values[-15]
-    zero_time = dw_dets.average4.values[-8]
+    minus_cases = dw_dets.average4.values[-1 - offset_days - offset_days]
+    zero_time = dw_dets.average4.values[-1 - offset_days]
     plus_cases = dw_dets.average4.values[-1]
     dw_dets = None
     for key in f.keys():
@@ -102,9 +119,9 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
         avg_detected = avg_array(detected, sliding_window_length, plus_cases*1.4)
         zero_time_av = np.argmax(avg_detected[avg_detected <= zero_time])
         t0 = detected[zero_time_av]
-        detected = detected - t0
+        detected = detected - (t0 + offset_days)
 
-        filt_detected = detected[detected <= - offset_days]
+        filt_detected = detected[detected <= - 2 * offset_days]
         if len(filt_detected) == 0:
             continue
 
@@ -114,7 +131,7 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
             fails.append(avg_detected[arg_tminus])
             continue
 
-        filt_detected = detected[detected <= offset_days]
+        filt_detected = detected[detected <= 0]
         if len(filt_detected) == 0:
             continue
 
@@ -126,29 +143,24 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
 
         successes += 1
 
-        infected = infected - t0
+        infected = infected - (t0 + offset_days)
         for ij, arr in enumerate([detected, infected]):
-            start_y = np.argmax(arr >= 0) + 1
-            x = arr[arr >= 0]
+            start_y = np.argmax(arr >= -offset_days) + 1 #
+            x = arr[arr >= -offset_days]
             x = x[x <= days]
             # TODO: if we want to display bundles for averages instead:
             # y = avg_detected[zero_time_av:zero_time_av + len(x)]
             y = np.arange(start_y, start_y + len(x))
-            print(f'{len(x)} {len(y)}')
-            x, y = every_nth(np.array(x), y, step=0.05)
-            print(f'{len(x)} {len(y)}')
+            x, y = compress(x, y, step)
             arrs[ij].append(zip(x, y))
 
         x = detected[detected <= 0]
         y = np.arange(1, 1 + len(x))
-        print(f'{len(x)} {len(y)}')
-        x, y = every_nth(np.array(x), y, step=0.05)
-        print(f'{len(x)} {len(y)}')
+        x, y = compress(x, y, step)
         detected_check_.append(zip(x, y))
         x = detected[detected <= 0]
         y = avg_detected[:len(x)]
-        x, y = every_nth(np.array(x), y, step=0.05)
-        print(f'{len(x)} {len(y)}')
+        x, y = compress(x, y, step)
         detected_check_slide_.append(zip(x, y))
         # TODO: if we want to display bundles for averages instead, we need to store y_ as well
         detected = None
