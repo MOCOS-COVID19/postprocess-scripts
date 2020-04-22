@@ -127,6 +127,9 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
 
         arg_tminus = np.argmax(filt_detected)
 
+        if len(avg_detected) < arg_tminus:
+            continue
+
         if np.abs(avg_detected[arg_tminus] - minus_cases) > offset_tolerance * minus_cases:
             fails.append(avg_detected[arg_tminus])
             continue
@@ -136,6 +139,9 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
             continue
 
         arg_tplus = np.argmax(filt_detected)
+
+        if len(avg_detected) < arg_tplus:
+            continue
 
         if np.abs(avg_detected[arg_tplus] - plus_cases) > offset_tolerance * plus_cases:
             fails2.append(avg_detected[arg_tplus])
