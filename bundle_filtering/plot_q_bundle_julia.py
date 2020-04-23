@@ -68,6 +68,8 @@ def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x,
                 continue
             if x_elem >= max_x:
                 continue
+            if x_elem < -days_offset:
+                continue
             x_p = x_to_xid(x_elem, -days_offset, max_x, plot_resolution_x)
             y_p = y_to_yid(y_elem, maxy, plot_resolution_y)
             if prev_point is None:
