@@ -86,17 +86,17 @@ def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x,
     cbarlabel = 'Zagęszczenie trajektorii'
     cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
 
-    ax.set_xticks(np.arange(-days_offset, plot_resolution_x + 1, 7 * plot_resolution_x / max_x))
+    ax.set_xticks(np.arange(-days_offset, plot_resolution_x + 1, 2 * plot_resolution_x / max_x))
     now = parser.parse(begin_date)
     before = now - dt.timedelta(days=days_offset)
     later = now + dt.timedelta(days=max_x + 1)
-    days = mdates.drange(before, later, dt.timedelta(days=7))
+    days = mdates.drange(before, later, dt.timedelta(days=2))
     t = [dt.datetime.fromordinal(int(day)).strftime('%d/%m/%y') for day in days]
-    ax.set_xticklabels([t[i] for i, v in enumerate(range(-days_offset, max_x + 1, 7))], rotation=30)
+    ax.set_xticklabels([t[i] for i, v in enumerate(range(-days_offset, max_x + 1, 2))], rotation=90)
     ax.set_yticks([v for v in np.arange(plot_resolution_y, -1, -plot_resolution_y / 10.0)])
     ax.set_yticklabels(
         [int(v) for v in np.arange(0, maxy + 1, maxy / 10.0)])  # , list(np.arange(20)))
-
+    ax.grid(True)
     ax.set_ylabel(ylabel, fontsize=18)
     xlabel_pl = 'Data'
     xlabel_en = 'Days from today'
