@@ -83,7 +83,7 @@ def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x,
     # array = ndimage.grey_dilation(array, footprint=s)
     pa = ax.imshow(np.rot90(array), cmap='BuPu', vmin=0, vmax=np.maximum(5, np.percentile(array, 99)),
                    aspect='auto')
-    ax.set_title(f'q={q_id}, ({bundle_prefix.strip("_")})', fontsize=18)
+    #ax.set_title(f'q={q_id}, ({bundle_prefix.strip("_")})', fontsize=18)
     cbb = plt.colorbar(pa, shrink=0.35)
     cbarlabel = 'Zagęszczenie trajektorii'
     cbb.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=18)
