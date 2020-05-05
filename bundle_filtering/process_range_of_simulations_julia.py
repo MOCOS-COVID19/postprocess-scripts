@@ -190,10 +190,10 @@ class JDL2Processor(Processor):
         return path.keys()
 
     def get_detected(self, path, key):
-        return path[key]['detection_times'][()]  # to będzie z detections.csv
+        return path[key]['detection_times'][()]
 
     def get_infection_time(self, path, key):
-        return path[key]['infection_times'][()]  # to będzie z progressions.csv
+        return path[key]['infection_times'][()]
 
 
 class CSVProcessor(Processor):
