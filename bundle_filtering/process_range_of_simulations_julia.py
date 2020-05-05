@@ -185,7 +185,7 @@ class Processor:
         print(f'bundle success ratio: {successes}/{tries}')
 
 
-class JDL2Processor(Processor):
+class JLD2Processor(Processor):
     def _get_iterations(self, path):
         return path.keys()
 
@@ -257,7 +257,7 @@ def runner(path, offset_days, offset_tolerance, days, prefix, sliding_window_len
 
     if os.path.isfile(julia_path):
         f = h5py.File(julia_path, "r")
-        return JDL2Processor().run(f, path, offset_days, offset_tolerance, days, prefix, sliding_window_length,
+        return JLD2Processor().run(f, path, offset_days, offset_tolerance, days, prefix, sliding_window_length,
                                    groundtruth_path, step)
     if os.path.isdir(julia_path):
         return CSVProcessor().run(julia_path, path, offset_days, offset_tolerance, days, prefix, sliding_window_length,
