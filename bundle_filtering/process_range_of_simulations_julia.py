@@ -75,6 +75,7 @@ class Processor:
 
     def run(self, f, d, offset_days, offset_tolerance, days, prefix, sliding_window_length, groundtruth_path, step):
         # list_subfolders_with_paths = [f.path for f in os.scandir(d) if f.is_file()]
+        assert sliding_window_length == 7
         successes = 0
         tries = 0
         fails = []
@@ -86,15 +87,16 @@ class Processor:
         arrs = [detected_, infected_]
 
         dw_dets = pd.read_csv(groundtruth_path)
-        minus_cases = dw_dets.average4.values[-1 - offset_days - offset_days]
-        zero_time = dw_dets.average4.values[-1 - offset_days]
-        plus_cases = dw_dets.average4.values[-1]
+        minus_cases = dw_dets.daily_average7.values[-1 - offset_days - offset_days]
+        zero_time = dw_dets.daily_average7.values[-1 - offset_days]
+        plus_cases = dw_dets.daily_average7.values[-1]
         dw_dets = None
         for key in self._get_iterations(f):
 
             tries += 1
 
-            detected = self.get_detected(f, key)
+            cumulative_detected = self.get_detected(f, key)
+            detected = delayed_array(cumulative_detected, 1, plus_cases * 1.4)#self.convert_to_daily(detected)
             infected = self.get_infection_time(f, key)
 
             if n_avg(detected, detected[-1], sliding_window_length) <= zero_time:
