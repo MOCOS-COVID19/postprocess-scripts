@@ -54,15 +54,24 @@ def draw_back_in_time(reverse_array, df_y_column, title, ylabel, filename_fig, d
 
 
 def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x, plot_resolution_y, q_id,
-         bundle_prefix, d, days_offset):
+         bundle_prefix, d, days_offset, daily_increments=True):
     array = np.zeros((plot_resolution_x, plot_resolution_y))
     # x1 = np.arange(max_x * 1000)/1000
     for detections in item:
         x1, y1 = zip(*detections)
+
         # p = np.poly1d(coeffs)
         # y1 = np.exp(p(x1))
         zer = np.zeros_like(array)
         prev_point = None
+        if daily_increments:
+            y1 = np.array(y1)
+            x1 = np.array(x1)
+            x1 = x1[20:]
+            y1 = y1[20:] - y1[:-20]
+        else:
+            y1 = np.array(y1)
+            x1 = np.array(x1)
         for x_elem, y_elem in zip(x1, y1):
             if y_elem >= maxy:
                 continue
