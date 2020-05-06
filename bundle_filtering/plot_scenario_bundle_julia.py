@@ -81,10 +81,11 @@ def draw(item, maxy, ylabel, filename_fig, begin_date, max_x, plot_resolution_x,
                 continue
             x_p = x_to_xid(x_elem, -days_offset, max_x, plot_resolution_x)
             y_p = y_to_yid(y_elem, maxy, plot_resolution_y)
-            if prev_point is None:
-                zer[x_p, y_p] = 1.0
-            else:
-                zer[prev_point[0]:(x_p + 1), prev_point[1]:(y_p + 1)] = 1.0
+            #if prev_point is None:
+            #    zer[x_p, y_p] = 1.0
+            #else:
+            #    zer[prev_point[0]:(x_p + 1), prev_point[1]:(y_p + 1)] = 1.0
+            zer[x_p, y_p] = 1.0
             prev_point = (x_p, y_p)
         array += zer
     fig, ax = plt.subplots(figsize=(10, 6))
