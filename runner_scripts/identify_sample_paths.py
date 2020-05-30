@@ -38,9 +38,6 @@ daily_tol_up2=10
 if place == 'pl':
     daily_tol_down2 = 50
     daily_tol_up2 = 50
-elif place =='wroclaw':
-    daily_tol_down2 = 5
-    daily_tol_up2 = 5
 
 date_sync = sync_dates[place]
 daily_dates = pl_det[pl_det.date2>date_sync].date2.values
@@ -64,7 +61,7 @@ for x in x_:
         daily = h5py.File(daily_path, "r")
         successes = 0
         for k_i, k in enumerate(daily.keys()):
-            if k_i > 1000:
+            if k_i > 100:
                 break
             det = daily[k][DETECTIONS][()]
             inf = daily[k][INFECTIONS][()]
