@@ -1,4 +1,4 @@
-date,Liczba zdiagnozowanych osób we Wrocławiu,Aktywne przypadki,average2,average3,average4,daily,daily_average7,daily_average14,corrections,comment,city source,avg_mobility_DW,average,detections
+date,detected,Aktywne przypadki,average2,average3,average4,daily,daily_average7,daily_average14,corrections,comment,city source,avg_mobility_DW,average,detections
 30/03/2020,106,,106,106,106,0,0,0,0,,,37.22,0.37,106
 31/03/2020,115,,110.5,110.5,110.5,9,0,0,0,,,37.08,0.37,110.5
 01/04/2020,132,,123.5,117.6666667,117.6666667,17,0,0,0,,,36.96,0.37,123.5

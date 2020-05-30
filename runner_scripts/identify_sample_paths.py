@@ -22,6 +22,7 @@ from collections import defaultdict
 pl_det = pd.read_csv(pl_det_path)
 pl_det['date2'] = pl_det.date.apply(lambda x: '/'.join(x.split('/')[::-1]))
 
+bound_x = np.arange(160)
 prefix=os.path.join(home_dir, dir_exp)
 x_=np.arange(41)
 y_=np.arange(21)
