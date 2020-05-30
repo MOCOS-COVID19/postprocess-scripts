@@ -52,6 +52,8 @@ success_dict=defaultdict(int)
 dets=[]
 trys=[]
 infdet=defaultdict(list)
+parameters_path = os.path.join(prefix, 'parameters_map.csv')
+parameters = pd.read_csv(parameters_path)
 for x in x_:
     print(x)
     for y in y_:
